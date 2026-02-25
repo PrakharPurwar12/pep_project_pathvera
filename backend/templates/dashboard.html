@@ -30,8 +30,12 @@
 
     <section class="main-content">
 
-        <div class="section-head">
-            <h1>Overview</h1>
+        <div class="section-head dashboard-title-row">
+            <div>
+                <h1>Dashboard Overview</h1>
+                <p class="section-subcopy">A quick read on profile strength, role fit, and improvement signals.</p>
+            </div>
+            <p class="section-meta" id="dashboardFreshness">Updated just now</p>
         </div>
 
         <article class="card dashboard-empty hidden" id="dashboardEmptyState">
@@ -44,32 +48,53 @@
         <!-- STAT CARDS -->
         <!-- ========================= -->
 
-        <div class="stats-grid">
+        <section class="dashboard-section">
+            <div class="section-head section-head-compact">
+                <h2>Performance Overview</h2>
+            </div>
+        <div class="stats-grid" id="statsGrid">
 
             <article class="card stat-card">
-                <span class="stat-label">Resume Score</span>
+                <div class="stat-top">
+                    <span class="stat-label">Resume Score</span>
+                    <span class="info-dot" title="Overall score generated from your latest resume analysis." aria-label="Resume score info">i</span>
+                </div>
                 <div id="resumeScore" class="stat-value">0</div>
-                <p class="stat-note">Based on AI analysis</p>
+                <p class="stat-note" id="resumeScoreNote">Based on your latest analysis snapshot</p>
+                <p class="stat-meta">Updated 2h ago</p>
             </article>
 
             <article class="card stat-card">
-                <span class="stat-label">Job Matches</span>
+                <div class="stat-top">
+                    <span class="stat-label">Job Matches</span>
+                    <span class="info-dot" title="Counts recommendations that pass the model's relevance threshold." aria-label="Job matches info">i</span>
+                </div>
                 <div id="jobMatches" class="stat-value">0</div>
-                <p class="stat-note">Relevant open roles</p>
+                <p class="stat-note" id="jobMatchesNote">Relevant open roles</p>
+                <p class="stat-meta" id="jobMatchesMeta">Based on 0 applications</p>
             </article>
 
             <article class="card stat-card">
-                <span class="stat-label">Skills Mastered</span>
+                <div class="stat-top">
+                    <span class="stat-label">Skills Mastered</span>
+                    <span class="info-dot" title="Detected from technical skills parsed in your resume." aria-label="Skills mastered info">i</span>
+                </div>
                 <div id="skillsMastered" class="stat-value">0</div>
                 <p class="stat-note">Detected from resume</p>
+                <p class="stat-meta">Coverage across core role skills</p>
             </article>
 
         </div>
+        </section>
 
         <!-- ========================= -->
         <!-- CHART -->
         <!-- ========================= -->
 
+        <section class="dashboard-section utility-section">
+            <div class="section-head section-head-compact">
+                <h2>Skill Insights</h2>
+            </div>
         <div class="utility-grid">
             <article class="card chart-card">
                 <h2>Skill Growth</h2>
@@ -104,6 +129,7 @@
                 </div>
             </article>
         </div>
+        </section>
 
         <!-- ========================= -->
         <!-- INSIGHTS -->

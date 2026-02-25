@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
         setText("semanticScore", "0%");
         setText("marketScore", "0%");
         setText("scoreWeights", "--");
+        setText("jobMatchesMeta", "Based on 0 applications");
+        setText("resumeScoreNote", "Based on your latest analysis snapshot");
+        setText("dashboardFreshness", "No recent analysis");
         renderJobs([]);
         renderSkillGaps([]);
         return;
@@ -33,6 +36,12 @@ document.addEventListener("DOMContentLoaded", function () {
         "scoreWeights",
         `${formatWeight(topRecommendation.semantic_weight)} / ${formatWeight(topRecommendation.market_weight)}`
     );
+    setText("jobMatchesMeta", `Based on ${jobCount} application${jobCount === 1 ? "" : "s"}`);
+    setText(
+        "resumeScoreNote",
+        resumeScore >= 75 ? "Strong baseline for target roles" : "Room to improve targeted role readiness"
+    );
+    setText("dashboardFreshness", "Updated from latest resume analysis");
 
     createSkillChart(resumeScore);
     renderJobs(recommendations);
@@ -245,10 +254,15 @@ function createSkillChart(score) {
             datasets: [
                 {
                     data: [Math.max(score - 20, 10), Math.max(score - 12, 20), Math.max(score - 5, 30), score],
-                    borderColor: "#0c8eff",
-                    backgroundColor: "rgba(12,142,255,0.15)",
-                    fill: true,
-                    tension: 0.4
+                    borderColor: "#4ea1e8",
+                    backgroundColor: "transparent",
+                    fill: false,
+                    borderWidth: 2,
+                    pointRadius: 2.5,
+                    pointHoverRadius: 3,
+                    pointBackgroundColor: "#6fb3ea",
+                    pointBorderWidth: 0,
+                    tension: 0.2
                 }
             ]
         },
@@ -256,12 +270,34 @@ function createSkillChart(score) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    displayColors: false,
+                    backgroundColor: "#0f2134",
+                    borderColor: "#2a3f56",
+                    borderWidth: 1
+                }
             },
             scales: {
+                x: {
+                    grid: {
+                        color: "rgba(156,178,199,0.14)",
+                        tickLength: 0
+                    },
+                    ticks: {
+                        color: "#9cb2c7"
+                    }
+                },
                 y: {
                     beginAtZero: true,
-                    max: 100
+                    max: 100,
+                    grid: {
+                        color: "rgba(156,178,199,0.14)"
+                    },
+                    ticks: {
+                        stepSize: 20,
+                        color: "#9cb2c7"
+                    }
                 }
             }
         }
