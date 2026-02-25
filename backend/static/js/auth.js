@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Replace with Django login API call.
             window.pathVeraUI?.showToast("Login successful", `Welcome ${matchedUser.username}`, "success");
             setTimeout(() => {
-                window.location.href = "/dashboard/";
+                window.location.href = "/";
             }, 500);
         });
     }

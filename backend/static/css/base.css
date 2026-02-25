@@ -663,20 +663,32 @@ select:focus {
 }
 
 .waitlist-form {
-    padding: 16px;
+    padding: 20px;
     display: grid;
-    gap: 10px;
+    gap: 16px;
 }
 
 .waitlist-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 14px;
 }
 
 .waitlist-form textarea {
     resize: vertical;
-    min-height: 90px;
+    min-height: 120px;
+}
+
+.waitlist-form input,
+.waitlist-form textarea {
+    border-radius: 10px;
+}
+
+.waitlist-form .btn {
+    padding: 14px 18px;
+    border-radius: 14px;
+    width: 100%;
+    font-size: 1rem;
 }
 
 .trust-note {

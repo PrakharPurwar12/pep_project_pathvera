@@ -21,7 +21,7 @@ function enforceAuthAccess() {
     }
 
     if (currentUser && publicRoutes.has(currentPath)) {
-        window.location.href = "/dashboard/";
+        window.location.href = "/";
         return true;
     }
 
