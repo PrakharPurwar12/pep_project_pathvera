@@ -1,0 +1,73 @@
+{
+  "programming_languages": [
+    "python","java","c","c++","c#","javascript","typescript","go","rust","kotlin","swift","php","ruby","scala","r","matlab","bash","powershell","dart","groovy","objective-c","haskell","elixir","clojure","f#","assembly","scratch","cobol","fortran","solidity","vba","abap","gdscr","julia","nim","crystal","hack","apex","zig","groovy","plsql"
+  ],
+
+  "frontend": [
+    "html","css","sass","less","bootstrap","tailwind","material ui","chakra ui","bulma","foundation","react","next.js","angular","vue","nuxt.js","svelte","redux","mobx","zustand","webpack","vite","parcel","babel","jquery","three.js","d3.js","chart.js","storybook","figma","adobe xd","webflow","framer"
+  ],
+
+  "backend": [
+    "node.js","express","nestjs","django","flask","fastapi","spring","spring boot","hibernate","laravel","rails","asp.net","graphql","apollo","socket.io","grpc","rest api","microservices","serverless","firebase functions","supabase","prisma","typeorm"
+  ],
+
+  "databases": [
+    "mysql","postgresql","mongodb","sqlite","oracle","sql server","redis","cassandra","firebase","dynamodb","neo4j","mariadb","cockroachdb","elasticsearch","snowflake","bigquery","hbase","influxdb","realm","supabase db"
+  ],
+
+  "cloud": [
+    "aws","azure","gcp","heroku","digitalocean","cloudflare","linode","oracle cloud","ibm cloud","aws lambda","ec2","s3","rds","azure functions","cloud run","cloud storage","cloudfront","cloudwatch"
+  ],
+
+  "devops": [
+    "docker","kubernetes","jenkins","git","github","github actions","gitlab ci","bitbucket","terraform","ansible","prometheus","grafana","circleci","travis ci","helm","argocd","vault","nginx","apache","linux","unix","bash scripting"
+  ],
+
+  "data_science": [
+    "pandas","numpy","matplotlib","seaborn","scikit-learn","xgboost","lightgbm","statistics","data analysis","data visualization","tableau","power bi","excel","looker","data cleaning","data wrangling","eda","hypothesis testing"
+  ],
+
+  "machine_learning": [
+    "machine learning","deep learning","nlp","computer vision","tensorflow","pytorch","keras","huggingface","opencv","transformers","llms","reinforcement learning","cnn","rnn","lstm","gan","model deployment","mlops","feature engineering"
+  ],
+
+  "mobile": [
+    "android","ios","react native","flutter","xamarin","kotlin multiplatform","swiftui","jetpack compose","cordova","ionic"
+  ],
+
+  "testing": [
+    "pytest","junit","selenium","cypress","playwright","postman","mocha","chai","karma","testng","jest","supertest","unit testing","integration testing","tdd"
+  ],
+
+  "cybersecurity": [
+    "penetration testing","ethical hacking","network security","cryptography","wireshark","metasploit","burp suite","owasp","firewalls","siem","soc","risk assessment","incident response"
+  ],
+
+  "blockchain": [
+    "solidity","web3","ethereum","smart contracts","hardhat","truffle","polygon","hyperledger","defi","nft development"
+  ],
+
+  "ai_tools": [
+    "chatgpt","openai api","langchain","llamaindex","vector databases","pinecone","weaviate","milvus","rag","prompt engineering"
+  ],
+
+  "ui_ux": [
+    "user research","wireframing","prototyping","usability testing","interaction design","information architecture"
+  ],
+
+  "project_management": [
+    "agile","scrum","kanban","jira","trello","asana","product management","stakeholder management","roadmapping"
+  ],
+
+  "soft_skills": [
+    "communication","leadership","problem solving","critical thinking","teamwork","time management","adaptability","collaboration","presentation skills"
+  ],
+
+  "engineering_tools": [
+    "autocad","solidworks","catia","ansys","matlab simulink","labview","fusion 360"
+  ],
+
+  "business_tools": [
+    "sap","salesforce","hubspot","quickbooks","powerpoint","word","notion","slack","zoom"
+  ]
+}

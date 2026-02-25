@@ -1,0 +1,33 @@
+degree,domain
+bachelor of technology,technology
+bachelor of engineering,technology
+btech,technology
+be,technology
+mtech,technology
+master of technology,technology
+
+bca,technology
+mca,technology
+
+bachelor of business administration,business
+bba,business
+mba,business
+master of business administration,business
+
+bachelor of commerce,finance
+bcom,finance
+mcom,finance
+
+bachelor of science,science
+bsc,science
+msc,science
+
+ba,arts
+bachelor of arts,arts
+
+mbbs,medical
+bds,medical
+bpharm,medical
+
+llb,law
+bachelor of laws,law

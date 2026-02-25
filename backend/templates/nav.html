@@ -1,0 +1,29 @@
+<header>
+    <div class="container">
+        <nav>
+            <a href="/" class="logo">
+                <span class="logo-icon">PV</span>
+                <span>pathVera</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">Features</a></li>
+                <li><a href="/dashboard/">Dashboard</a></li>
+                <li><a href="/recommendations/">Jobs</a></li>
+                <li><a href="/resume/">Resume</a></li>
+                <li><a href="/chatbot/">Coach</a></li>
+                <li class="auth-dropdown">
+                    <button type="button" class="auth-toggle" id="authToggle" aria-haspopup="true" aria-expanded="false">
+                        Account
+                    </button>
+                    <div class="auth-menu hidden" id="authMenu" role="menu">
+                        <a href="/login/" data-auth-item="login" role="menuitem">Login</a>
+                        <a href="/register/" data-auth-item="signup" role="menuitem">Signup</a>
+                        <a href="/profile/" data-auth-item="profile" class="hidden" role="menuitem">Profile</a>
+                        <a href="#" data-auth-item="logout" class="hidden" role="menuitem">Logout</a>
+                    </div>
+                </li>
+            </ul>
+            <button type="button" class="btn theme-toggle" id="themeToggle">Theme</button>
+        </nav>
+    </div>
+</header>

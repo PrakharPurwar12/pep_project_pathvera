@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - pathVera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/base.css">
+    <link rel="stylesheet" href="../static/css/auth.css">
+</head>
+<body>
+    {% include "nav.html" %}
+
+    <main>
+<div class="auth-page">
+    <div class="container">
+        <section class="card auth-card fade-in">
+            <header class="auth-header">
+                <h1>Create Account</h1>
+                <p class="text-muted">Start your career growth journey.</p>
+            </header>
+
+            <form class="auth-form" id="registerForm">
+                <div class="form-group">
+                    <input type="text" id="fullName" name="fullName" required placeholder=" ">
+                    <label for="fullName">Full Name</label>
+                </div>
+                <p class="form-hint" id="registerError"></p>
+
+                <div class="form-group">
+                    <input type="text" id="username" name="username" required placeholder=" ">
+                    <label for="username">Username</label>
+                </div>
+                <p class="form-hint" id="usernameError"></p>
+
+                <div class="form-group">
+                    <input type="email" id="email" name="email" required placeholder=" ">
+                    <label for="email">Email Address</label>
+                </div>
+                <p class="form-hint" id="emailError"></p>
+
+                <div class="form-group">
+                    <input type="password" id="password" name="password" required placeholder=" ">
+                    <label for="password">Password</label>
+                    <button type="button" class="password-toggle" data-target="password">Show</button>
+                </div>
+                <div class="password-strength"><span></span></div>
+                <p class="form-hint" id="passwordError"></p>
+
+                <div class="form-group">
+                    <input type="password" id="confirmPassword" name="confirmPassword" required placeholder=" ">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <button type="button" class="password-toggle" data-target="confirmPassword">Show</button>
+                </div>
+                <p class="form-hint" id="confirmPasswordError"></p>
+
+                <button type="submit" class="btn btn-primary auth-submit">Sign Up</button>
+            </form>
+
+            <p class="auth-footer">Already have an account? <a href="/login/">Sign in</a></p>
+        </section>
+    </div>
+</div>
+    </main>
+
+    {% include "footer.html" %}
+
+    <script src="../static/js/core.js" defer></script>
+    <script src="../static/js/auth.js" defer></script>
+</body>
+</html>
+

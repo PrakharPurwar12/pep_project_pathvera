@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - pathVera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/base.css">
+    <link rel="stylesheet" href="../static/css/auth.css">
+</head>
+<body>
+    {% include "nav.html" %}
+
+    <main>
+<div class="auth-page">
+    <div class="container">
+        <section class="card auth-card fade-in">
+            <header class="auth-header">
+                <h1>Welcome Back</h1>
+                <p class="text-muted">Sign in to continue your journey.</p>
+            </header>
+
+            <form class="auth-form" id="loginForm">
+                <div class="form-group">
+                    <input type="text" id="loginId" name="loginId" required placeholder=" ">
+                    <label for="loginId">Email or Username</label>
+                </div>
+                <p class="form-hint" id="loginIdError"></p>
+
+                <div class="form-group">
+                    <input type="password" id="password" name="password" required placeholder=" ">
+                    <label for="password">Password</label>
+                    <button type="button" class="password-toggle" data-target="password">Show</button>
+                </div>
+                <p class="form-hint" id="passwordError"></p>
+
+                <button type="submit" class="btn btn-primary auth-submit">Sign In</button>
+            </form>
+
+            <p class="auth-footer">New user? <a href="/register/">Create account</a></p>
+        </section>
+    </div>
+</div>
+    </main>
+
+    {% include "footer.html" %}
+
+    <script src="../static/js/core.js" defer></script>
+    <script src="../static/js/auth.js" defer></script>
+</body>
+</html>
+

@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - pathVera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+{% include "nav.html" %}
+
+<main>
+<div class="container dashboard-grid fade-in">
+    <aside class="sidebar">
+        <div class="card profile-card">
+            <div class="avatar" data-user-initials>PV</div>
+            <h3 data-user-name>User</h3>
+            <p class="text-muted">Career Profile</p>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="sidebar-link">Overview</a>
+            <a href="/resume/" class="sidebar-link">My Resume</a>
+            <a href="/recommendations/" class="sidebar-link">Job Matches</a>
+            <a href="/profile/" class="sidebar-link active">Profile</a>
+            <a href="/chatbot/" class="sidebar-link">AI Coach</a>
+        </nav>
+    </aside>
+
+    <section class="main-content">
+        <div class="section-head">
+            <div>
+                <h1>My Profile</h1>
+                <p class="text-muted">Update personal details used for personalized recommendations.</p>
+            </div>
+        </div>
+
+        <article class="card profile-editor">
+            <form id="profileForm" class="profile-form">
+                <label for="profileFullName">Full Name</label>
+                <input id="profileFullName" type="text" placeholder="Enter full name" required>
+
+                <label for="profileUsername">Username</label>
+                <input id="profileUsername" type="text" placeholder="Enter username" required>
+
+                <label for="profileEmail">Email</label>
+                <input id="profileEmail" type="email" placeholder="Enter email">
+
+                <label for="profileLocation">Location</label>
+                <input id="profileLocation" type="text" placeholder="City, Country">
+
+                <label for="profileBio">Bio</label>
+                <textarea id="profileBio" rows="4" placeholder="Tell about your goals..."></textarea>
+
+                <div class="profile-actions">
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                    <a href="/dashboard/" class="btn">Go to Dashboard</a>
+                </div>
+            </form>
+        </article>
+    </section>
+</div>
+</main>
+
+{% include "footer.html" %}
+
+<script src="{% static 'js/core.js' %}" defer></script>
+<script src="{% static 'js/profile.js' %}" defer></script>
+</body>
+</html>

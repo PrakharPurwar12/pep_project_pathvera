@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendations - pathVera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/base.css">
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+</head>
+<body>
+    {% include "nav.html" %}
+
+    <main>
+<div class="container fade-in">
+    <section class="page-intro">
+        <h1>Job Recommendations</h1>
+        <p class="text-muted">Current matches based on your resume and skill profile.</p>
+    </section>
+
+    <section class="recommendation-grid" id="recommendationGrid">
+    </section>
+</div>
+
+<div class="goal-modal-wrap" id="matchModalWrap" aria-hidden="true">
+    <article class="card goal-modal" role="dialog" aria-modal="true" aria-labelledby="matchTitle">
+        <div class="section-head">
+            <h2 id="matchTitle">Match Details</h2>
+            <button type="button" class="btn" id="closeMatchModal">Close</button>
+        </div>
+        <p class="text-muted" id="matchSubtitle">Role and company details</p>
+        <div class="goal-form">
+            <p><strong>Match Score:</strong> <span id="matchScoreText">--</span></p>
+            <p><strong>Recommended Skills:</strong> <span id="matchSkillsText">--</span></p>
+            <p class="text-muted" id="matchInsightText"></p>
+            <div class="goal-actions">
+                <a id="applyMatchLink" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer">Apply Now</a>
+            </div>
+        </div>
+    </article>
+</div>
+    </main>
+
+    {% include "footer.html" %}
+
+    <script src="../static/js/core.js?v=20260222c" defer></script>
+    <script src="../static/js/recommendations.js?v=20260222c" defer></script>
+</body>
+</html>
+

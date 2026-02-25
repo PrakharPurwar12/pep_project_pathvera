@@ -1,0 +1,123 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume - pathVera</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+{% include "nav.html" %}
+
+<main>
+<div class="container dashboard-grid fade-in">
+
+    <aside class="sidebar">
+        <div class="card profile-card">
+            <div class="avatar" data-user-initials>PV</div>
+            <h3 data-user-name>User</h3>
+            <p class="text-muted">AI Career Explorer</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="sidebar-link">Overview</a>
+            <a href="/resume/" class="sidebar-link active">My Resume</a>
+            <a href="/recommendations/" class="sidebar-link">Job Matches</a>
+            <a href="/profile/" class="sidebar-link">Profile</a>
+            <a href="/chatbot/" class="sidebar-link">AI Coach</a>
+        </nav>
+    </aside>
+
+    <section class="main-content">
+
+        <div class="section-head">
+            <div>
+                <h1>Resume Management</h1>
+                <p class="text-muted">Upload your CV and get instant AI-powered analysis</p>
+            </div>
+        </div>
+
+        <div class="resume-upload-wrapper">
+
+            <label class="upload-area" id="dropZone" for="resumeUpload">
+                <input type="file" id="resumeUpload" accept=".pdf,.docx" hidden>
+
+                <svg class="upload-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+
+                <h3>Upload Your Resume</h3>
+                <p class="text-muted">Drag and drop PDF or DOCX (max 5MB)</p>
+                <p class="upload-hint">Or click to browse</p>
+            </label>
+
+            <p class="error-banner hidden" id="resumeError"></p>
+
+            <article class="card upload-preview hidden" id="filePreview">
+                <div class="preview-header">
+                    <div class="file-info">
+                        <div class="file-icon">📄</div>
+                        <div>
+                            <h3 id="fileName">resume.pdf</h3>
+                            <p class="text-muted">
+                                <span id="fileSize">0 MB</span> • Ready to upload
+                            </p>
+                        </div>
+                    </div>
+                    <button class="btn" id="removeFile" type="button">✕</button>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="uploadBar"></div>
+                    </div>
+                    <p class="progress-text">Processing your resume... It may take a few minutes.</p>
+                </div>
+            </article>
+        </div>
+
+        <div class="resume-features">
+            <article class="card feature-item">
+                <div class="feature-icon">✓</div>
+                <h4>AI Analysis</h4>
+                <p class="text-muted" id="aiAnalysisText">Get instant feedback on your resume structure and content</p>
+            </article>
+
+            <article class="card feature-item">
+                <div class="feature-icon">⚡</div>
+                <h4>Score Metrics</h4>
+                <p class="text-muted" id="scoreMetricsText">See how your resume ranks against job requirements</p>
+            </article>
+
+            <article class="card feature-item">
+                <div class="feature-icon">📊</div>
+                <h4>Improvements</h4>
+                <p class="text-muted" id="improvementsText">Get specific recommendations to strengthen your profile</p>
+            </article>
+        </div>
+
+        <div class="top-gap">
+            <a href="/dashboard/" class="btn btn-primary hidden" id="goDashboardBtn">Go to Dashboard</a>
+        </div>
+
+    </section>
+</div>
+</main>
+
+{% include "footer.html" %}
+
+<script src="{% static 'js/core.js' %}?v=20260222d" defer></script>
+<script src="{% static 'js/resume_upload.js' %}?v=20260222d" defer></script>
+
+</body>
+</html>

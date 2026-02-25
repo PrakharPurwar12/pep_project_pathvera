@@ -1,0 +1,143 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - pathVera</title>
+
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="/static/js/core.js?v=20260222d" defer></script>
+    <script src="/static/js/dashboard.js?v=20260222d" defer></script>
+</head>
+
+<body>
+
+{% include "nav.html" %}
+
+<main>
+<div class="container dashboard-grid fade-in">
+
+    <aside class="sidebar">
+        <div class="card profile-card">
+            <div class="avatar" data-user-initials>PV</div>
+            <h3 data-user-name>User</h3>
+            <p class="text-muted">Aspiring Professional</p>
+        </div>
+    </aside>
+
+    <section class="main-content">
+
+        <div class="section-head">
+            <h1>Overview</h1>
+        </div>
+
+        <article class="card dashboard-empty hidden" id="dashboardEmptyState">
+            <h2>No resume analysis yet</h2>
+            <p class="text-muted">Upload your resume first to unlock score, matched jobs, and skill-gap insights.</p>
+            <a href="/resume/" class="btn btn-primary">Upload Resume</a>
+        </article>
+
+        <!-- ========================= -->
+        <!-- STAT CARDS -->
+        <!-- ========================= -->
+
+        <div class="stats-grid">
+
+            <article class="card stat-card">
+                <span class="stat-label">Resume Score</span>
+                <div id="resumeScore" class="stat-value">0</div>
+                <p class="stat-note">Based on AI analysis</p>
+            </article>
+
+            <article class="card stat-card">
+                <span class="stat-label">Job Matches</span>
+                <div id="jobMatches" class="stat-value">0</div>
+                <p class="stat-note">Relevant open roles</p>
+            </article>
+
+            <article class="card stat-card">
+                <span class="stat-label">Skills Mastered</span>
+                <div id="skillsMastered" class="stat-value">0</div>
+                <p class="stat-note">Detected from resume</p>
+            </article>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- CHART -->
+        <!-- ========================= -->
+
+        <div class="utility-grid">
+            <article class="card chart-card">
+                <h2>Skill Growth</h2>
+                <div class="chart-wrap">
+                    <canvas id="skillChart"></canvas>
+                </div>
+            </article>
+            <article class="card chart-card" id="scoreBreakdownCard">
+                <h2>Score Breakdown</h2>
+                <div class="activity-list top-gap">
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">Semantic Match</p>
+                            <p class="text-muted">Profile similarity from resume content</p>
+                        </div>
+                        <span class="badge" id="semanticScore">0%</span>
+                    </div>
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">Market Score</p>
+                            <p class="text-muted">Demand signal from jobs data</p>
+                        </div>
+                        <span class="badge" id="marketScore">0%</span>
+                    </div>
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">Weight Mix</p>
+                            <p class="text-muted">Final = semantic x weight + market x weight</p>
+                        </div>
+                        <span class="badge" id="scoreWeights">--</span>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <!-- ========================= -->
+        <!-- INSIGHTS -->
+        <!-- ========================= -->
+
+        <section class="top-gap">
+
+            <div class="section-head section-head-spaced">
+                <h2>Insights</h2>
+                <div>
+                    <button type="button" class="btn tab-btn" id="insightsToggle">Skill Gaps</button>
+                </div>
+            </div>
+
+            <!-- JOBS PANEL -->
+            <div class="tab-panel active" data-panel="jobs">
+                <div id="jobsContainer" class="activity-list">
+                </div>
+            </div>
+
+            <!-- SKILLS PANEL -->
+            <div class="tab-panel" data-panel="skills">
+                <div id="skillsContainer" class="activity-list">
+                </div>
+            </div>
+
+        </section>
+
+    </section>
+
+</div>
+</main>
+
+{% include "footer.html" %}
+
+</body>
+</html>
