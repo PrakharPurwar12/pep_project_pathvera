@@ -26,7 +26,8 @@
     --transition-smooth: 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-[data-theme="dark"] {
+[data-theme="dark"],
+body.dark-mode {
     --bg: #081422;
     --surface: #102235;
     --surface-soft: #162d45;
@@ -76,6 +77,7 @@ body {
     min-height: 100vh;
     padding-inline: 12px;
     animation: pageIn var(--transition-smooth);
+    transition: background-color var(--transition-smooth), color var(--transition-smooth);
 }
 
 body::before {
@@ -203,7 +205,8 @@ nav {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    min-width: 150px;
+    min-width: 200px;
+    max-width: min(260px, calc(100vw - 24px));
     display: grid;
     gap: 4px;
     padding: 8px;
@@ -212,6 +215,10 @@ nav {
     background: var(--surface);
     box-shadow: var(--shadow-sm);
     z-index: 25;
+    opacity: 0;
+    transform: translateY(-6px);
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .auth-menu a {
@@ -224,6 +231,47 @@ nav {
 .auth-menu a:hover {
     color: var(--text);
     background: var(--surface-soft);
+}
+
+.auth-dropdown.open .auth-menu {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.auth-menu-option {
+    width: 100%;
+    text-align: left;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-weight: 700;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.auth-menu-option:hover {
+    color: var(--text);
+    background: var(--surface-soft);
+}
+
+.theme-menu-toggle {
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 14px rgba(7, 29, 49, 0.08);
+}
+
+.theme-menu-toggle.is-light-state {
+    color: #17324b;
+    background: linear-gradient(120deg, #f8fbff, #e9f2ff);
+}
+
+.theme-menu-toggle.is-dark-state {
+    color: #e8f2ff;
+    background: linear-gradient(120deg, #11283f, #0a1c2f);
+    box-shadow: 0 10px 20px rgba(3, 13, 24, 0.35);
 }
 
 main {
@@ -683,10 +731,6 @@ select:focus {
     display: block;
 }
 
-.theme-toggle {
-    min-width: 92px;
-}
-
 .toast-wrap {
     position: fixed;
     right: 14px;
@@ -781,6 +825,25 @@ select:focus {
     .auth-menu {
         position: static;
         margin-top: 8px;
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+        max-height: 0;
+        padding: 0;
+        border-width: 0;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-4px);
+        visibility: hidden;
+    }
+
+    .auth-dropdown.open .auth-menu {
+        max-height: 320px;
+        padding: 8px;
+        border-width: 1px;
+        opacity: 1;
+        transform: translateY(0);
+        visibility: visible;
     }
 
     .hero {

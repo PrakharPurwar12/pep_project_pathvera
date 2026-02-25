@@ -12,18 +12,20 @@
                 <li><a href="/resume/">Resume</a></li>
                 <li><a href="/chatbot/">Coach</a></li>
                 <li class="auth-dropdown">
-                    <button type="button" class="auth-toggle" id="authToggle" aria-haspopup="true" aria-expanded="false">
+                    <button type="button" class="auth-toggle" id="authToggle" aria-haspopup="true" aria-expanded="false" aria-controls="authMenu">
                         Account
                     </button>
-                    <div class="auth-menu hidden" id="authMenu" role="menu">
+                    <div class="auth-menu" id="authMenu" role="menu" aria-hidden="true">
                         <a href="/login/" data-auth-item="login" role="menuitem">Login</a>
                         <a href="/register/" data-auth-item="signup" role="menuitem">Signup</a>
                         <a href="/profile/" data-auth-item="profile" class="hidden" role="menuitem">Profile</a>
                         <a href="#" data-auth-item="logout" class="hidden" role="menuitem">Logout</a>
+                        <button type="button" class="auth-menu-option theme-menu-toggle" id="themeMenuToggle" role="menuitem" data-theme-toggle>
+                            Switch to Dark
+                        </button>
                     </div>
                 </li>
             </ul>
-            <button type="button" class="btn theme-toggle" id="themeToggle">Theme</button>
         </nav>
     </div>
 </header>

@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
     bindWaitlistForm();
 });
 
+const THEME_STORAGE_KEY = "pv-theme";
+
 function enforceAuthAccess() {
     const currentUser = (localStorage.getItem("pv-user-name") || "").trim();
     const currentPath = normalizeRoutePath(window.location.pathname);
@@ -39,21 +41,42 @@ function normalizeRoutePath(pathname) {
 }
 
 function bindThemeToggle() {
-    const toggle = document.getElementById("themeToggle");
-    const savedTheme = localStorage.getItem("pv-theme") || "light";
-    document.documentElement.setAttribute("data-theme", savedTheme);
-    if (!toggle) return;
+    const savedTheme = getStoredTheme();
+    applyTheme(savedTheme);
+}
 
-    toggle.textContent = savedTheme === "dark" ? "Light" : "Theme";
+function getStoredTheme() {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    return savedTheme === "dark" ? "dark" : "light";
+}
 
-    toggle.addEventListener("click", () => {
-        const current = document.documentElement.getAttribute("data-theme");
-        const next = current === "dark" ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", next);
-        localStorage.setItem("pv-theme", next);
-        toggle.textContent = next === "dark" ? "Light" : "Theme";
-        showToast("Theme updated", next === "dark" ? "Dark mode active" : "Light mode active", "success");
-    });
+function getActiveTheme() {
+    if (document.body.classList.contains("dark-mode")) return "dark";
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    return currentTheme === "dark" ? "dark" : "light";
+}
+
+function applyTheme(themeName) {
+    const normalizedTheme = themeName === "dark" ? "dark" : "light";
+    document.body.classList.toggle("dark-mode", normalizedTheme === "dark");
+    document.documentElement.setAttribute("data-theme", normalizedTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, normalizedTheme);
+}
+
+function setTheme(themeName) {
+    const nextTheme = themeName === "dark" ? "dark" : "light";
+    const currentTheme = getActiveTheme();
+    if (nextTheme === currentTheme) return false;
+
+    applyTheme(nextTheme);
+    showToast("Theme updated", nextTheme === "dark" ? "Dark mode active" : "Light mode active", "success");
+    return true;
+}
+
+function toggleTheme() {
+    const currentTheme = getActiveTheme();
+    const nextTheme = currentTheme === "dark" ? "light" : "dark";
+    return setTheme(nextTheme);
 }
 
 function bindFaq() {
@@ -155,20 +178,32 @@ function bindWaitlistForm() {
 
 function setupAuthNav() {
     const currentUser = (localStorage.getItem("pv-user-name") || "").trim();
+    const dropdownHolder = document.querySelector(".auth-dropdown");
     const toggle = document.getElementById("authToggle");
     const menu = document.getElementById("authMenu");
-    if (!toggle || !menu) return;
+    if (!toggle || !menu || !dropdownHolder) return;
 
     const loginItem = menu.querySelector('[data-auth-item="login"]');
     const signupItem = menu.querySelector('[data-auth-item="signup"]');
     const profileItem = menu.querySelector('[data-auth-item="profile"]');
     const logoutItem = menu.querySelector('[data-auth-item="logout"]');
+    const themeToggleButton = menu.querySelector("[data-theme-toggle]");
 
     const setMenuOpen = (isOpen) => {
-        const holder = toggle.closest(".auth-dropdown");
-        if (holder) holder.classList.toggle("open", isOpen);
+        dropdownHolder.classList.toggle("open", isOpen);
         toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-        menu.classList.toggle("hidden", !isOpen);
+        menu.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    };
+
+    const syncThemeToggleButton = () => {
+        if (!themeToggleButton) return;
+        const activeTheme = getActiveTheme();
+        const isDark = activeTheme === "dark";
+        themeToggleButton.textContent = isDark ? "Switch to Light" : "Switch to Dark";
+        themeToggleButton.setAttribute("data-theme-state", isDark ? "dark" : "light");
+        themeToggleButton.setAttribute("aria-label", isDark ? "Switch to light theme" : "Switch to dark theme");
+        themeToggleButton.classList.toggle("is-dark-state", isDark);
+        themeToggleButton.classList.toggle("is-light-state", !isDark);
     };
 
     if (currentUser) {
@@ -184,11 +219,23 @@ function setupAuthNav() {
         profileItem?.classList.add("hidden");
         logoutItem?.classList.add("hidden");
     }
+    syncThemeToggleButton();
 
     toggle.addEventListener("click", (event) => {
         event.stopPropagation();
         const isOpen = toggle.getAttribute("aria-expanded") === "true";
-        setMenuOpen(!isOpen);
+        const nextOpenState = !isOpen;
+        setMenuOpen(nextOpenState);
+        if (nextOpenState) syncThemeToggleButton();
+    });
+
+    dropdownHolder.addEventListener("mouseenter", () => {
+        setMenuOpen(true);
+        syncThemeToggleButton();
+    });
+
+    dropdownHolder.addEventListener("mouseleave", () => {
+        setMenuOpen(false);
     });
 
     document.addEventListener("click", (event) => {
@@ -213,6 +260,14 @@ function setupAuthNav() {
             setTimeout(() => {
                 window.location.href = "/login/";
             }, 250);
+        });
+    }
+
+    if (themeToggleButton) {
+        themeToggleButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+            toggleTheme();
+            syncThemeToggleButton();
         });
     }
 }
