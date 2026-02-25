@@ -42,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             localStorage.setItem("pv-user-name", matchedUser.username);
             localStorage.setItem("pv-user-fullname", matchedUser.fullName);
+            localStorage.setItem("pv-user-email", matchedUser.email);
             // Replace with Django login API call.
             window.pathVeraUI?.showToast("Login successful", `Welcome ${matchedUser.username}`, "success");
             setTimeout(() => {
