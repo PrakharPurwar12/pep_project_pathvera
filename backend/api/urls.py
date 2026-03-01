@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
     # Page views
     analyze_resume,
+    chat_api,
     chatbot_page,
     dashboard_page,
     index_page,
@@ -49,6 +50,7 @@ urlpatterns = [
     path("register", register_page),
     # Legacy endpoint
     path("analyze/", analyze_resume, name="analyze_resume"),
+    path("api/chat/", chat_api, name="chat_api"),
     # Support old/static .html links used in templates
     path("index.html", index_page),
     path("resume.html", resume_page),

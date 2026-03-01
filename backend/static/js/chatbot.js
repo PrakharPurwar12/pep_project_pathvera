@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const reply = await askAssistant(text);
         removeTyping();
-        appendMessage(reply, "bot", true);
+        appendMessage(formatAssistantReply(reply), "bot", true);
     });
 
     clearButton.addEventListener("click", () => {
@@ -69,34 +69,128 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function askAssistant(query) {
-        // Replace this endpoint with your Django + ML chat endpoint.
+        const fallbackReply = "AI service is temporarily unavailable. Please try again later.";
+        const resumeContext = getResumeContextForChat();
+
         try {
             const response = await fetch("/api/chat/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: query, language: "en" })
+                body: JSON.stringify({
+                    message: query,
+                    resume_context: resumeContext
+                })
             });
-            if (response.ok) {
-                const data = await response.json();
-                if (data && typeof data.reply === "string" && data.reply.trim()) {
-                    return data.reply;
+
+            const data = await response.json().catch(() => null);
+            if (data && typeof data.reply === "string" && data.reply.trim()) {
+                return data.reply;
+            }
+        } catch (error) {
+            return fallbackReply;
+        }
+
+        return fallbackReply;
+    }
+
+    function getResumeContextForChat() {
+        const sources = [];
+
+        // Legacy/simple storage key
+        try {
+            const legacy = JSON.parse(localStorage.getItem("pv_resume_analysis") || "{}");
+            if (legacy && typeof legacy === "object") {
+                sources.push(legacy);
+            }
+        } catch (error) {
+            // Ignore invalid local data.
+        }
+
+        // Current per-user storage used by resume upload flow
+        try {
+            const username = (localStorage.getItem("pv-user-name") || "").trim().toLowerCase();
+            if (username) {
+                const scoped = JSON.parse(localStorage.getItem(`analysisData:${username}`) || "{}");
+                if (scoped && typeof scoped === "object") {
+                    sources.push(scoped);
                 }
             }
         } catch (error) {
-            // Fallback is used when backend is not connected yet.
+            // Ignore invalid local data.
         }
 
-        const text = query.toLowerCase();
-        if (text.includes("resume")) {
-            return "Upload your resume and I can help improve keyword matching and impact-focused bullet points.";
+        const primary = sources.find((item) => item.parsed_resume || item.recommendations) || sources[0] || {};
+        const parsed = primary.parsed_resume || {};
+        const recommendations = Array.isArray(primary.recommendations) ? primary.recommendations : [];
+
+        const skills = extractSkills(parsed, primary.skills);
+        const careerMatches = recommendations
+            .map((item) => String(item?.career_title || "").trim())
+            .filter(Boolean)
+            .slice(0, 5);
+        const skillGaps = aggregateSkillGaps(recommendations);
+
+        return {
+            skills,
+            career_matches: careerMatches,
+            skill_gaps: skillGaps
+        };
+    }
+
+    function extractSkills(parsedResume, fallbackSkills) {
+        const set = new Set();
+
+        const technical = parsedResume?.technical_skills;
+        if (technical && typeof technical === "object") {
+            Object.values(technical).forEach((group) => {
+                if (Array.isArray(group)) {
+                    group.forEach((skill) => {
+                        const value = String(skill || "").trim();
+                        if (value) set.add(value);
+                    });
+                }
+            });
         }
-        if (text.includes("interview")) {
-            return "Prepare three STAR stories for interviews: leadership, problem solving, and ownership.";
+
+        if (Array.isArray(fallbackSkills)) {
+            fallbackSkills.forEach((skill) => {
+                const value = String(skill || "").trim();
+                if (value) set.add(value);
+            });
         }
-        if (text.includes("job") || text.includes("role")) {
-            return "Check top matches on the recommendations page and apply first to high-match roles.";
-        }
-        return "I am ready. Share your target role and current skill level to get a focused plan.";
+
+        return Array.from(set).slice(0, 30);
+    }
+
+    function aggregateSkillGaps(recommendations) {
+        const counts = {};
+        recommendations.forEach((item) => {
+            const missing = Array.isArray(item?.missing_skills) ? item.missing_skills : [];
+            missing.forEach((skill) => {
+                const value = String(skill || "").trim();
+                if (!value) return;
+                counts[value] = (counts[value] || 0) + 1;
+            });
+        });
+
+        return Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([skill]) => skill)
+            .slice(0, 10);
+    }
+
+    function formatAssistantReply(text) {
+        return String(text || "")
+            // Remove markdown heading markers
+            .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+            // Convert markdown list stars to simple bullets
+            .replace(/^\s*\*\s+/gm, "- ")
+            // Remove bold/italic markdown markers
+            .replace(/\*\*(.*?)\*\*/g, "$1")
+            .replace(/\*(.*?)\*/g, "$1")
+            // Keep spacing clean
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
     }
 
     function persistHistory() {

@@ -5,3 +5,4 @@ backend\core\__pycache__
 backend\media\resumes
 backend\ml\__pycache__
 backend\ml\pipeline\__pycache__
+backend\.env

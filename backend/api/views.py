@@ -1,4 +1,6 @@
 import os
+import json
+import logging
 import tempfile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -12,6 +14,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from ml.pipeline.resume_parser import parse_resume
 from ml.pipeline.recommendation_engine import recommend_careers
+try:
+    from google import genai
+except ImportError:
+    genai = None
 
 from .models import (
     UserProfile,
@@ -29,6 +35,8 @@ from .serializers import (
     SavedJobSerializer,
     ChatMessageSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 #Frontend Pages
@@ -414,6 +422,86 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
 
 
 # ==================== Traditional API Endpoints ====================
+
+def _normalize_context_list(value):
+    """Normalize a context field into a clean string list."""
+    if not isinstance(value, list):
+        return []
+    normalized = []
+    for item in value:
+        text = str(item).strip()
+        if text:
+            normalized.append(text)
+    return normalized
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def chat_api(request):
+    """Resume-aware chatbot endpoint powered by Gemini."""
+    fallback_reply = "AI service is temporarily unavailable. Please try again later."
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"reply": "Invalid JSON payload."}, status=400)
+
+    user_message = str(payload.get("message", "")).strip()
+    resume_context = payload.get("resume_context", {})
+    if not isinstance(resume_context, dict):
+        resume_context = {}
+
+    skills = _normalize_context_list(resume_context.get("skills"))
+    career_matches = _normalize_context_list(resume_context.get("career_matches"))
+    skill_gaps = _normalize_context_list(resume_context.get("skill_gaps"))
+
+    if not user_message:
+        return JsonResponse({"reply": "Message cannot be empty."}, status=400)
+
+    prompt = (
+        "You are PathVera AI Career Coach.\n\n"
+        "User Resume Data:\n"
+        f"Skills: {', '.join(skills) if skills else 'Not provided'}\n"
+        f"Career Matches: {', '.join(career_matches) if career_matches else 'Not provided'}\n"
+        f"Skill Gaps: {', '.join(skill_gaps) if skill_gaps else 'Not provided'}\n\n"
+        "User Question:\n"
+        f"{user_message}\n\n"
+        "Provide personalized career advice and suggestions.\n\n"
+        "Keep responses concise and relevant."
+    )
+
+    try:
+        if genai is None:
+            raise ImportError("google-genai is not installed")
+
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("Missing GEMINI_API_KEY")
+
+        preferred_model = (os.getenv("GEMINI_MODEL") or "gemini-3-flash-preview").strip()
+        model_candidates = []
+        for model_name in [preferred_model, "gemini-2.0-flash"]:
+            if model_name and model_name not in model_candidates:
+                model_candidates.append(model_name)
+
+        client = genai.Client(api_key=api_key)
+        for model_name in model_candidates:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                reply = (getattr(response, "text", "") or "").strip()
+                if reply:
+                    return JsonResponse({"reply": reply})
+            except Exception as model_error:
+                logger.warning("Gemini request failed for model %s: %s", model_name, model_error)
+                continue
+
+        return JsonResponse({"reply": fallback_reply}, status=503)
+    except Exception as error:
+        logger.exception("Chat API failed: %s", error)
+        return JsonResponse({"reply": fallback_reply}, status=503)
 
 @csrf_exempt
 @require_http_methods(["POST"])
