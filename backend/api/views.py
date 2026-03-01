@@ -466,8 +466,16 @@ def chat_api(request):
         f"Skill Gaps: {', '.join(skill_gaps) if skill_gaps else 'Not provided'}\n\n"
         "User Question:\n"
         f"{user_message}\n\n"
-        "Provide personalized career advice and suggestions.\n\n"
-        "Keep responses concise and relevant."
+        "Use the resume data as context, but only when relevant to the user's exact question.\n\n"
+        "Response rules (must follow):\n"
+        "1) Respond ONLY to what the user asked.\n"
+        "2) Keep responses concise: maximum 3-6 lines unless the user explicitly asks for a detailed analysis.\n"
+        "3) Do NOT generate a full career report automatically.\n"
+        "4) Generate sections like 'Career Analysis', 'Strengths', 'Skill Gaps', and 'Suggestions' ONLY when the user specifically asks for full/profile analysis.\n"
+        "5) Use bullet points when listing items.\n"
+        "6) Avoid long paragraphs.\n"
+        "7) Keep output clean, conversational, and in Markdown.\n"
+        "8) If the message is a greeting (e.g., hi/hello), reply with a brief greeting and ask how you can help."
     )
 
     try:

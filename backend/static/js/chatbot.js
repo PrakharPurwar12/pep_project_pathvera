@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const reply = await askAssistant(text);
         removeTyping();
-        appendMessage(formatAssistantReply(reply), "bot", true);
+        appendMessage(reply, "bot", true);
     });
 
     clearButton.addEventListener("click", () => {
@@ -45,7 +45,16 @@ document.addEventListener("DOMContentLoaded", () => {
         item.className = `message ${role}`;
         const content = document.createElement("span");
         content.className = "message-text";
-        content.textContent = text;
+        if (role === "bot") {
+            content.classList.add("ai-message");
+            if (window.marked && typeof window.marked.parse === "function") {
+                content.innerHTML = window.marked.parse(String(text || ""));
+            } else {
+                content.textContent = String(text || "");
+            }
+        } else {
+            content.textContent = String(text || "");
+        }
         const meta = document.createElement("span");
         meta.className = "message-meta";
         meta.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -177,20 +186,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .sort((a, b) => b[1] - a[1])
             .map(([skill]) => skill)
             .slice(0, 10);
-    }
-
-    function formatAssistantReply(text) {
-        return String(text || "")
-            // Remove markdown heading markers
-            .replace(/^\s{0,3}#{1,6}\s+/gm, "")
-            // Convert markdown list stars to simple bullets
-            .replace(/^\s*\*\s+/gm, "- ")
-            // Remove bold/italic markdown markers
-            .replace(/\*\*(.*?)\*\*/g, "$1")
-            .replace(/\*(.*?)\*/g, "$1")
-            // Keep spacing clean
-            .replace(/\n{3,}/g, "\n\n")
-            .trim();
     }
 
     function persistHistory() {

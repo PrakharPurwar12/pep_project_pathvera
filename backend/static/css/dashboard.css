@@ -642,6 +642,38 @@
     display: block;
 }
 
+.ai-message {
+    background: #f4f6f8;
+    padding: 14px;
+    border-radius: 10px;
+    line-height: 1.6;
+}
+
+.ai-message h1,
+.ai-message h2,
+.ai-message h3,
+.ai-message h4 {
+    margin: 0 0 8px 0;
+    line-height: 1.35;
+}
+
+.ai-message p {
+    margin: 0 0 8px 0;
+}
+
+.ai-message ul {
+    margin: 0 0 8px 18px;
+    padding: 0;
+}
+
+.ai-message li {
+    margin-bottom: 6px;
+}
+
+[data-theme="dark"] .ai-message {
+    background: #16293d;
+}
+
 .typing {
     display: inline-flex;
     gap: 4px;
