@@ -1,8 +1,28 @@
-.venv
-backend\db.sqlite3
-backend\api\__pycache__
-backend\core\__pycache__
-backend\media\resumes
-backend\ml\__pycache__
-backend\ml\pipeline\__pycache__
-backend\.env
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+env/
+venv/
+
+# Environment Variables
+.env
+
+# Django
+db.sqlite3
+*.log
+media/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Python cache
+*.pkl
+*.pickle
