@@ -20,6 +20,7 @@ from .views import (
     JobOpportunityViewSet,
     SavedJobViewSet,
     ChatMessageViewSet,
+    ProtectedView,
 )
 
 # Create a router and register viewsets
@@ -63,6 +64,7 @@ urlpatterns = [
     # JWT auth endpoints
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/protected/", ProtectedView.as_view(), name="protected_api"),
     # REST API endpoints
     path("api/", include(router.urls)),
 ]

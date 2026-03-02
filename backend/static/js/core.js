@@ -4,28 +4,41 @@ document.addEventListener("DOMContentLoaded", () => {
     bindFaq();
     applyUserProfile();
     normalizeInternalLinksForStaticMode();
-    setupAuthNav();
+    const authState = setupAuthNav();
+    setupLandingCtas(authState);
     bindWaitlistForm();
 });
 
 const THEME_STORAGE_KEY = "pv-theme";
 
 function enforceAuthAccess() {
-    const currentUser = (localStorage.getItem("pv-user-name") || "").trim();
+    const { isAuthenticated } = resolveAuthState();
     const currentPath = normalizeRoutePath(window.location.pathname);
-    const publicRoutes = new Set(["/login", "/register"]);
+    const publicRoutes = new Set(["/", "/index", "/login", "/register"]);
 
-    if (!currentUser && !publicRoutes.has(currentPath)) {
+    if (!isAuthenticated && !publicRoutes.has(currentPath)) {
         window.location.href = "/login/";
         return true;
     }
 
-    if (currentUser && publicRoutes.has(currentPath)) {
+    if (isAuthenticated && (currentPath === "/login" || currentPath === "/register")) {
         window.location.href = "/";
         return true;
     }
 
     return false;
+}
+
+function resolveAuthState() {
+    const localUser = (localStorage.getItem("pv-user-name") || "").trim();
+    const navNode = document.querySelector("nav[data-server-auth]");
+    const serverUser = (navNode?.getAttribute("data-server-user") || "").trim();
+    const username = localUser || serverUser;
+
+    return {
+        isAuthenticated: Boolean(localUser),
+        username
+    };
 }
 
 function normalizeRoutePath(pathname) {
@@ -177,26 +190,28 @@ function bindWaitlistForm() {
 }
 
 function setupAuthNav() {
-    const currentUser = (localStorage.getItem("pv-user-name") || "").trim();
+    const authState = resolveAuthState();
+    const { isAuthenticated, username } = authState;
     const dropdownHolder = document.querySelector(".auth-dropdown");
     const toggle = document.getElementById("authToggle");
     const menu = document.getElementById("authMenu");
-    if (!toggle || !menu || !dropdownHolder) return;
+    if (!toggle || !menu || !dropdownHolder) return authState;
 
     const loginItem = menu.querySelector('[data-auth-item="login"]');
     const signupItem = menu.querySelector('[data-auth-item="signup"]');
     const profileItem = menu.querySelector('[data-auth-item="profile"]');
-    const logoutItem = menu.querySelector('[data-auth-item="logout"]');
-    const themeToggleButton = menu.querySelector("[data-theme-toggle]");
+    const logoutItem = document.querySelector('[data-auth-item="logout"]');
+    const dashboardItem = document.querySelector('[data-auth-item="dashboard"]');
+    const themeToggleButton = document.querySelector("[data-theme-toggle]");
+    if (!themeToggleButton) return authState;
 
-    const setMenuOpen = (isOpen) => {
-        dropdownHolder.classList.toggle("open", isOpen);
-        toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-        menu.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    const setMenuOpen = (open) => {
+        dropdownHolder.classList.toggle("open", open);
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        menu.setAttribute("aria-hidden", open ? "false" : "true");
     };
 
     const syncThemeToggleButton = () => {
-        if (!themeToggleButton) return;
         const activeTheme = getActiveTheme();
         const isDark = activeTheme === "dark";
         themeToggleButton.textContent = isDark ? "Switch to Light" : "Switch to Dark";
@@ -206,36 +221,30 @@ function setupAuthNav() {
         themeToggleButton.classList.toggle("is-light-state", !isDark);
     };
 
-    if (currentUser) {
-        toggle.textContent = currentUser;
+    if (isAuthenticated) {
+        toggle.textContent = username || "Account";
         loginItem?.classList.add("hidden");
         signupItem?.classList.add("hidden");
         profileItem?.classList.remove("hidden");
         logoutItem?.classList.remove("hidden");
+        dashboardItem?.classList.remove("hidden");
     } else {
         toggle.textContent = "Account";
         loginItem?.classList.remove("hidden");
         signupItem?.classList.remove("hidden");
         profileItem?.classList.add("hidden");
         logoutItem?.classList.add("hidden");
+        dashboardItem?.classList.add("hidden");
     }
+
     syncThemeToggleButton();
 
     toggle.addEventListener("click", (event) => {
+        event.preventDefault();
         event.stopPropagation();
         const isOpen = toggle.getAttribute("aria-expanded") === "true";
-        const nextOpenState = !isOpen;
-        setMenuOpen(nextOpenState);
-        if (nextOpenState) syncThemeToggleButton();
-    });
-
-    dropdownHolder.addEventListener("mouseenter", () => {
-        setMenuOpen(true);
-        syncThemeToggleButton();
-    });
-
-    dropdownHolder.addEventListener("mouseleave", () => {
-        setMenuOpen(false);
+        setMenuOpen(!isOpen);
+        if (!isOpen) syncThemeToggleButton();
     });
 
     document.addEventListener("click", (event) => {
@@ -263,11 +272,34 @@ function setupAuthNav() {
         });
     }
 
-    if (themeToggleButton) {
-        themeToggleButton.addEventListener("click", (event) => {
-            event.stopPropagation();
-            toggleTheme();
-            syncThemeToggleButton();
+    themeToggleButton.addEventListener("click", () => {
+        toggleTheme();
+        syncThemeToggleButton();
+    });
+
+    return authState;
+}
+
+function setupLandingCtas(authState) {
+    if (!authState) return;
+    const startButtons = document.querySelectorAll("[data-cta-start]");
+    const dashboardButtons = document.querySelectorAll("[data-cta-dashboard]");
+
+    if (authState.isAuthenticated) {
+        startButtons.forEach((button) => {
+            button.classList.add("hidden");
         });
+        dashboardButtons.forEach((button) => {
+            button.setAttribute("href", "/dashboard/");
+        });
+        return;
     }
+
+    startButtons.forEach((button) => {
+        button.classList.remove("hidden");
+        button.setAttribute("href", "/login/");
+    });
+    dashboardButtons.forEach((button) => {
+        button.setAttribute("href", "/login/");
+    });
 }

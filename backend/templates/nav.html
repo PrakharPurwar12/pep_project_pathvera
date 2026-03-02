@@ -1,15 +1,16 @@
 <header>
     <div class="container">
-        <nav>
+        <nav data-server-auth="{{ request.user.is_authenticated|yesno:'true,false' }}" data-server-user="{{ request.user.username|default:'' }}">
             <a href="/" class="logo">
                 <span class="logo-icon">PV</span>
                 <span>pathVera</span>
             </a>
             <ul class="nav-links">
-                <li><a href="/">Features</a></li>
-                <li><a href="/dashboard/">Dashboard</a></li>
+                <li><a href="/#preview">Preview</a></li>
+                <li><a href="/#how-it-works">How it Works</a></li>
+                <li><a href="/#features">Features</a></li>
+                <li><a href="/dashboard/" data-auth-item="dashboard" class="hidden">Dashboard</a></li>
                 <li><a href="/recommendations/">Jobs</a></li>
-                <li><a href="/resume/">Resume</a></li>
                 <li><a href="/chatbot/">Coach</a></li>
                 <li class="auth-dropdown">
                     <button type="button" class="auth-toggle" id="authToggle" aria-haspopup="true" aria-expanded="false" aria-controls="authMenu">

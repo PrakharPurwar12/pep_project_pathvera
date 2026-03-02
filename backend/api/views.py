@@ -11,6 +11,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from ml.pipeline.resume_parser import parse_resume
 from ml.pipeline.recommendation_engine import recommend_careers
@@ -37,6 +39,13 @@ from .serializers import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class ProtectedView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({"message": "Authenticated user access granted"})
 
 
 #Frontend Pages
@@ -440,6 +449,15 @@ def _normalize_context_list(value):
 def chat_api(request):
     """Resume-aware chatbot endpoint powered by Gemini."""
     fallback_reply = "AI service is temporarily unavailable. Please try again later."
+
+    # Allow authenticated session users or Bearer JWT users.
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        auth_result = JWTAuthentication().authenticate(request)
+        if auth_result:
+            request.user = auth_result[0]
+
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return JsonResponse({"reply": "Authentication credentials were not provided."}, status=401)
 
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
