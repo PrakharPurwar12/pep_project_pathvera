@@ -9,13 +9,11 @@ from .models import (
     ChatMessage,
 )
 
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name')
         read_only_fields = ('id',)
-
 
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -24,7 +22,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ('id', 'user', 'bio', 'phone_number', 'location', 'created_at', 'updated_at')
         read_only_fields = ('id', 'created_at', 'updated_at')
-
 
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,7 +32,6 @@ class ResumeSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'user', 'parsed_content', 'skills', 'experience', 'education', 'uploaded_at', 'updated_at')
 
-
 class CareerRecommendationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CareerRecommendation
@@ -45,7 +41,6 @@ class CareerRecommendationSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'user', 'created_at', 'updated_at')
-
 
 class JobOpportunitySerializer(serializers.ModelSerializer):
     salary_range = serializers.SerializerMethodField()
@@ -68,7 +63,6 @@ class JobOpportunitySerializer(serializers.ModelSerializer):
             return f"Up to ${obj.salary_max:,}"
         return "Not specified"
 
-
 class SavedJobSerializer(serializers.ModelSerializer):
     job = JobOpportunitySerializer(read_only=True)
     job_id = serializers.IntegerField(write_only=True)
@@ -77,7 +71,6 @@ class SavedJobSerializer(serializers.ModelSerializer):
         model = SavedJob
         fields = ('id', 'user', 'job', 'job_id', 'notes', 'saved_at')
         read_only_fields = ('id', 'user', 'saved_at')
-
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
