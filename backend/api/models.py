@@ -118,3 +118,32 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.timestamp}"
+
+
+class ResumeAnalysis(models.Model):
+    """Store normalized resume analysis data for dashboard rendering."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='resume_analyses')
+    skills = models.JSONField(default=list)
+    career_matches = models.JSONField(default=list)
+    skill_gaps = models.JSONField(default=list)
+    resume_score = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - analysis {self.created_at:%Y-%m-%d %H:%M}"
+
+
+class UserActivity(models.Model):
+    """Store basic profile timeline events for each user."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activities')
+    action = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.action}"

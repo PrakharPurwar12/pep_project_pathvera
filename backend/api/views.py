@@ -28,6 +28,8 @@ from .models import (
     JobOpportunity,
     SavedJob,
     ChatMessage,
+    ResumeAnalysis,
+    UserActivity,
 )
 from .serializers import (
     UserProfileSerializer,
@@ -66,7 +68,36 @@ def chatbot_page(request):
     return render(request, "chatbot.html")
 
 def profile_page(request):
-    return render(request, "profile.html")
+    profile = None
+    resume = None
+    activities = []
+
+    if getattr(request, "user", None) and request.user.is_authenticated:
+        profile = UserProfile.objects.filter(user=request.user).first()
+        resume = ResumeAnalysis.objects.filter(user=request.user).order_by("-created_at").first()
+        activities = list(UserActivity.objects.filter(user=request.user).order_by("-created_at")[:8])
+
+    skills = _normalize_context_list(resume.skills if resume else [])
+    career_matches = _normalize_context_list(resume.career_matches if resume else [])
+    skill_gaps = _normalize_context_list(resume.skill_gaps if resume else [])
+    resume_score = max(0, min(100, int(resume.resume_score if resume else 0)))
+    ai_summary = generate_ai_career_summary(skills, career_matches)
+    no_analysis_message = "No resume analysis available. Upload a resume to see insights."
+
+    context = {
+        "profile_user": request.user,
+        "profile_details": profile,
+        "skills": skills,
+        "career_matches": career_matches,
+        "skill_gaps": skill_gaps,
+        "resume_score": resume_score,
+        "ai_summary": ai_summary,
+        "has_resume_analysis": bool(resume),
+        "no_analysis_message": no_analysis_message,
+        "latest_analysis_at": resume.created_at if resume else None,
+        "activities": activities,
+    }
+    return render(request, "profile.html", context)
 
 def login_page(request):
     return render(request, "login.html")
@@ -147,7 +178,119 @@ def persist_resume_analysis(user, resume_file, parsed_resume, recommendations):
             job_outlook=f"Market score {rec.get('market_score', 0)}"
         )
 
+    create_resume_analysis_record(user, parsed_resume, recommendations)
+    log_user_activity(user, f"Uploaded and analyzed resume: {resume.title}")
     return resume
+
+
+def _flatten_skills(skills_payload):
+    """Convert parsed technical skills payload into a flat string list."""
+    if isinstance(skills_payload, list):
+        return [str(skill).strip() for skill in skills_payload if str(skill).strip()]
+    if isinstance(skills_payload, dict):
+        normalized = []
+        for values in skills_payload.values():
+            if isinstance(values, list):
+                normalized.extend(
+                    str(skill).strip() for skill in values if str(skill).strip()
+                )
+            elif values:
+                text = str(values).strip()
+                if text:
+                    normalized.append(text)
+        return list(dict.fromkeys(normalized))
+    return []
+
+
+def create_resume_analysis_record(user, parsed_resume, recommendations):
+    """Persist normalized analysis fields used by the profile dashboard."""
+    skills = _flatten_skills(parsed_resume.get("technical_skills"))
+
+    career_matches = []
+    skill_gaps = []
+    best_score = 0
+    for rec in recommendations:
+        title = str(rec.get("career_title", "")).strip()
+        if title:
+            career_matches.append(title)
+
+        missing = rec.get("missing_skills", [])
+        if isinstance(missing, list):
+            skill_gaps.extend(str(item).strip() for item in missing if str(item).strip())
+
+        score = rec.get("final_score", 0)
+        try:
+            score_value = float(score)
+            if 0 <= score_value <= 1:
+                score_value *= 100
+            if score_value > best_score:
+                best_score = score_value
+        except (TypeError, ValueError):
+            continue
+
+    ResumeAnalysis.objects.create(
+        user=user,
+        skills=list(dict.fromkeys(skills))[:30],
+        career_matches=list(dict.fromkeys(career_matches))[:10],
+        skill_gaps=list(dict.fromkeys(skill_gaps))[:20],
+        resume_score=max(0, min(100, int(round(best_score)))),
+    )
+
+
+def log_user_activity(user, action):
+    if not user:
+        return
+    UserActivity.objects.create(user=user, action=action[:255])
+
+
+def generate_ai_career_summary(skills, career_matches):
+    if not skills and not career_matches:
+        return "Upload and analyze your resume to generate a personalized AI career summary."
+
+    fallback = (
+        f"Your profile highlights strengths in {', '.join(skills[:5]) if skills else 'your detected skills'}. "
+        f"Recommended directions include {', '.join(career_matches[:3]) if career_matches else 'roles aligned to your profile'}. "
+        "Focus on consistent project experience and closing key skill gaps to improve role readiness."
+    )
+
+    try:
+        if genai is None:
+            return fallback
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return fallback
+
+        prompt = (
+            "User Skills: "
+            f"{', '.join(skills) if skills else 'Not provided'}\n"
+            "Career Matches: "
+            f"{', '.join(career_matches) if career_matches else 'Not provided'}\n\n"
+            "Write a short career summary explaining the user's strengths and recommended career direction."
+        )
+
+        preferred_model = (os.getenv("GEMINI_MODEL") or "gemini-3-flash-preview").strip()
+        model_candidates = []
+        for model_name in [preferred_model, "gemini-2.0-flash"]:
+            if model_name and model_name not in model_candidates:
+                model_candidates.append(model_name)
+
+        client = genai.Client(api_key=api_key)
+        for model_name in model_candidates:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                text = (getattr(response, "text", "") or "").strip()
+                if text:
+                    return text
+            except Exception as model_error:
+                logger.warning("Career summary model failed for %s: %s", model_name, model_error)
+                continue
+    except Exception as error:
+        logger.warning("Career summary generation failed: %s", error)
+
+    return fallback
 
 
 # ==================== ViewSets for REST API ====================
@@ -255,6 +398,9 @@ class ResumeViewSet(viewsets.ModelViewSet):
                     salary_range=salary_text,
                     job_outlook=f"Market score {rec.get('market_score', 0)}"
                 )
+
+            create_resume_analysis_record(request.user, parsed_resume, recommendations)
+            log_user_activity(request.user, f"Uploaded and analyzed resume: {title}")
 
             serializer = self.get_serializer(resume)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -802,6 +802,85 @@
     margin-top: 4px;
 }
 
+/* Profile dashboard spacing adjustments */
+.profile-dashboard {
+    display: grid;
+    gap: 16px;
+}
+
+.profile-dashboard .section-head {
+    margin-bottom: 2px;
+}
+
+.profile-dashboard .section-head .text-muted {
+    display: block;
+    margin-top: 6px;
+    line-height: 1.45;
+}
+
+.profile-dashboard .profile-dashboard-grid {
+    gap: 14px;
+}
+
+.profile-dashboard .profile-dashboard-grid > .card,
+.profile-dashboard .profile-empty-state,
+.profile-dashboard .profile-timeline-card {
+    padding: 16px 18px;
+}
+
+.profile-dashboard .profile-dashboard-grid > .card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-dashboard .profile-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.profile-dashboard .profile-empty-state .text-muted {
+    margin: 0;
+}
+
+.profile-dashboard .profile-timeline-card {
+    margin-top: 2px;
+}
+
+.profile-dashboard h2 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    line-height: 1.25;
+}
+
+.profile-dashboard .dashboard-subhead {
+    margin: 8px 0 2px;
+    font-size: 1rem;
+}
+
+.profile-dashboard .text-muted {
+    line-height: 1.45;
+}
+
+.profile-dashboard .activity-list {
+    gap: 10px;
+}
+
+.profile-dashboard .activity-item {
+    padding: 12px 14px;
+}
+
+.profile-dashboard .tag-list {
+    margin-top: 2px;
+    gap: 10px;
+}
+
+.profile-dashboard .progress-track {
+    margin: 4px 0 2px;
+}
+
 #matchModalWrap .goal-modal {
     width: min(560px, 94vw);
 }
@@ -835,5 +914,16 @@
     .dashboard-title-row {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .profile-dashboard .profile-empty-state {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-dashboard .profile-dashboard-grid > .card,
+    .profile-dashboard .profile-empty-state,
+    .profile-dashboard .profile-timeline-card {
+        padding: 14px 14px;
     }
 }

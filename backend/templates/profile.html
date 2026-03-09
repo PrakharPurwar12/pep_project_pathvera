@@ -18,8 +18,8 @@
 <div class="container dashboard-grid fade-in">
     <aside class="sidebar">
         <div class="card profile-card">
-            <div class="avatar" data-user-initials>PV</div>
-            <h3 data-user-name>User</h3>
+            <div class="avatar">{{ profile_user.username|default:"PV"|slice:":2"|upper }}</div>
+            <h3>{{ profile_user.get_full_name|default:profile_user.username|default:"User" }}</h3>
             <p class="text-muted">Career Profile</p>
         </div>
         <nav class="sidebar-nav">
@@ -31,36 +31,132 @@
         </nav>
     </aside>
 
-    <section class="main-content">
+    <section class="main-content profile-dashboard">
         <div class="section-head">
             <div>
-                <h1>My Profile</h1>
-                <p class="text-muted">Update personal details used for personalized recommendations.</p>
+                <h1>Career Intelligence Dashboard</h1>
+                <p class="text-muted">Live profile intelligence powered by your latest resume analysis.</p>
             </div>
         </div>
 
-        <article class="card profile-editor">
-            <form id="profileForm" class="profile-form">
-                <label for="profileFullName">Full Name</label>
-                <input id="profileFullName" type="text" placeholder="Enter full name" required>
+        {% if not has_resume_analysis %}
+        <article class="card profile-empty-state">
+            <p class="text-muted">{{ no_analysis_message }}</p>
+            <a href="/resume/" class="btn btn-primary">Upload Resume</a>
+        </article>
+        {% endif %}
 
-                <label for="profileUsername">Username</label>
-                <input id="profileUsername" type="text" placeholder="Enter username" required>
-
-                <label for="profileEmail">Email</label>
-                <input id="profileEmail" type="email" placeholder="Enter email">
-
-                <label for="profileLocation">Location</label>
-                <input id="profileLocation" type="text" placeholder="City, Country">
-
-                <label for="profileBio">Bio</label>
-                <textarea id="profileBio" rows="4" placeholder="Tell about your goals..."></textarea>
-
-                <div class="profile-actions">
-                    <button type="submit" class="btn btn-primary">Save Profile</button>
-                    <a href="/dashboard/" class="btn">Go to Dashboard</a>
+        <div class="job-grid profile-dashboard-grid">
+            <article class="card">
+                <h2>User Information</h2>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">Full Name</p>
+                            <p class="text-muted">{{ profile_user.get_full_name|default:profile_user.username|default:"Not available" }}</p>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">Username</p>
+                            <p class="text-muted">{{ profile_user.username|default:"Not available" }}</p>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">Email</p>
+                            <p class="text-muted">{{ profile_user.email|default:"Not available" }}</p>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">Location</p>
+                            <p class="text-muted">{{ profile_details.location|default:"Not available" }}</p>
+                        </div>
+                    </div>
                 </div>
-            </form>
+            </article>
+
+            <article class="card">
+                <h2>Resume Insights</h2>
+                {% if latest_analysis_at %}
+                <p class="text-muted">Latest analysis: {{ latest_analysis_at|date:"M d, Y H:i" }}</p>
+                {% else %}
+                <p class="text-muted">No analysis timestamp available.</p>
+                {% endif %}
+                <div class="tag-list">
+                    <span class="tag">{{ skills|length }} skills detected</span>
+                    <span class="tag">{{ career_matches|length }} career matches</span>
+                    <span class="tag">{{ skill_gaps|length }} skill gaps</span>
+                </div>
+            </article>
+
+            <article class="card">
+                <h2>Career Matches</h2>
+                <div class="activity-list">
+                    {% for career in career_matches %}
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">{{ career }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No career matches available.</p>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <article class="card">
+                <h2>Skill Gaps</h2>
+                <div class="activity-list">
+                    {% for gap in skill_gaps %}
+                    <div class="activity-item">
+                        <div>
+                            <p class="activity-title">{{ gap }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No skill gaps detected.</p>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <article class="card">
+                <h2>Resume Strength</h2>
+                <div class="progress-track">
+                    <div class="progress-fill{% if resume_score < 50 %} low{% endif %}" style="width: {{ resume_score }}%"></div>
+                </div>
+                <p class="text-muted">{{ resume_score }}% Resume Strength</p>
+                <h3 class="dashboard-subhead">Detected Skills</h3>
+                <div class="tag-list">
+                    {% for skill in skills %}
+                    <span class="tag">{{ skill }}</span>
+                    {% empty %}
+                    <span class="text-muted">No skills detected yet.</span>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <article class="card">
+                <h2>AI Career Summary</h2>
+                <p class="text-muted">{{ ai_summary }}</p>
+            </article>
+        </div>
+
+        <article class="card profile-timeline-card">
+            <h2>Activity Timeline</h2>
+            <div class="activity-list">
+                {% for activity in activities %}
+                <div class="activity-item">
+                    <div>
+                        <p class="activity-title">{{ activity.action }}</p>
+                        <p class="text-muted">{{ activity.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No activity recorded yet.</p>
+                {% endfor %}
+            </div>
         </article>
     </section>
 </div>
