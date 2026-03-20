@@ -1,210 +1,122 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pathVera - AI Career SaaS</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../static/css/base.css">
-</head>
-<body>
-    {% include "nav.html" %}
+{% extends "base.html" %}
 
-    <main class="landing-main">
-<div class="container">
-    <section class="hero hero-section fade-in">
-        <article class="card hero-card">
-            <span class="badge">AI Career Copilot</span>
-            <h1>Turn Career Signals into Offers with pathVera</h1>
-            <p class="text-muted hero-subheading">AI-powered resume analysis, job matching, and career coaching in one platform.</p>
+{% block title %}PathVera | Professional Career Intelligence{% endblock %}
+{% block body_class %}page-home{% endblock %}
+
+{% block content %}
+<section class="hero-shell fade-in">
+    <div class="container hero-grid">
+        <article class="hero-main card">
+            <span class="eyebrow">AI Career Intelligence Platform</span>
+            <h1>From resume upload to interview-ready applications, in one professional workspace.</h1>
+            <p class="hero-copy">PathVera helps you evaluate resume quality, identify skill gaps, and prioritize better-fit opportunities with clear, actionable guidance.</p>
             <div class="hero-actions">
-                <a href="/login/" class="btn btn-primary primary-btn" data-cta-start>Start Free</a>
-                <a href="/login/" class="btn" data-cta-dashboard>Go to Dashboard</a>
+                <a href="/login/" class="btn btn-primary" data-cta-start>Start Free</a>
+                <a href="/dashboard/" class="btn" data-cta-dashboard>Open Dashboard</a>
+            </div>
+            <div class="hero-points">
+                <span>Resume scoring</span>
+                <span>Skill-gap diagnostics</span>
+                <span>AI coaching</span>
             </div>
         </article>
-        <article class="card hero-visual product-preview-card dashboard-preview" id="preview">
-            <div class="preview-shell">
-                <div class="preview-top">
-                    <h3>Live Dashboard Preview</h3>
-                    <span class="badge">Demo</span>
+
+        <article class="hero-panel card" id="preview">
+            <div class="panel-head">
+                <h3>Candidate Snapshot</h3>
+                <span class="badge">Live Preview</span>
+            </div>
+            <div class="panel-kpis">
+                <div>
+                    <p>Resume Score</p>
+                    <strong>88</strong>
                 </div>
-                <div class="preview-metrics">
-                    <div class="preview-metric">
-                        <p class="preview-label">Resume Score</p>
-                        <p class="preview-value">88</p>
-                    </div>
-                    <div class="preview-metric">
-                        <p class="preview-label">Job Matches</p>
-                        <p class="preview-value">26</p>
-                    </div>
-                    <div class="preview-metric">
-                        <p class="preview-label">Skill Growth</p>
-                        <p class="preview-value">+14%</p>
-                    </div>
+                <div>
+                    <p>Matched Roles</p>
+                    <strong>26</strong>
                 </div>
-                <div class="preview-chart">
-                    <span class="chart-bar bar-1"></span>
-                    <span class="chart-bar bar-2"></span>
-                    <span class="chart-bar bar-3"></span>
-                    <span class="chart-bar bar-4"></span>
-                    <span class="chart-bar bar-5"></span>
-                </div>
-                <div class="preview-status">
-                    <span class="status-chip ok">Resume Optimized</span>
-                    <span class="status-chip warn">1 Skill Gap</span>
+                <div>
+                    <p>Skill Progress</p>
+                    <strong>+14%</strong>
                 </div>
             </div>
+            <div class="panel-track">
+                <span class="t1"></span>
+                <span class="t2"></span>
+                <span class="t3"></span>
+                <span class="t4"></span>
+                <span class="t5"></span>
+            </div>
+            <div class="panel-note">Weekly readiness trend based on profile improvements.</div>
         </article>
-    </section>
-    <p class="trust-row">Trusted by candidates targeting <strong>Google • Microsoft • Amazon • Adobe</strong></p>
+    </div>
+</section>
 
-    <section class="landing-section" id="how-it-works">
-        <div class="section-head">
-            <h2>How pathVera Works</h2>
-        </div>
-        <div class="how-grid">
-            <article class="card how-card">
-                <span class="step-pill">Step 1</span>
-                <h3><span class="step-icon" aria-hidden="true">📄</span>Upload Resume</h3>
-                <p class="text-muted">Drop your CV once and generate structured insights in seconds.</p>
-            </article>
-            <article class="card how-card">
-                <span class="step-pill">Step 2</span>
-                <h3><span class="step-icon" aria-hidden="true">🤖</span>Get AI Analysis</h3>
-                <p class="text-muted">Receive score, skill gaps, and role-specific keyword improvements.</p>
-            </article>
-            <article class="card how-card">
-                <span class="step-pill">Step 3</span>
-                <h3><span class="step-icon" aria-hidden="true">🎯</span>Apply Smarter</h3>
-                <p class="text-muted">Prioritize high-match roles and prepare with AI coach prompts.</p>
-            </article>
-        </div>
-    </section>
+<section class="container trust-strip">
+    <p>Trusted by candidates targeting</p>
+    <div class="trust-logos">
+        <span>Google</span>
+        <span>Microsoft</span>
+        <span>Amazon</span>
+        <span>Adobe</span>
+        <span>Atlassian</span>
+    </div>
+</section>
 
-    <section class="landing-section">
-        <div class="section-head">
-            <h2>Prepared By Candidates Targeting</h2>
-        </div>
-        <div class="company-strip">
-            <span>Google</span>
-            <span>Amazon</span>
-            <span>Microsoft</span>
-            <span>Spotify</span>
-            <span>Airbnb</span>
-            <span>Adobe</span>
-        </div>
-    </section>
+<section class="container section-block" id="how-it-works">
+    <div class="section-head">
+        <h2>How PathVera Works</h2>
+        <p class="text-muted">Simple workflow. Measurable outcomes.</p>
+    </div>
+    <div class="process-grid">
+        <article class="card process-card">
+            <span>01</span>
+            <h3>Upload Resume</h3>
+            <p class="text-muted">Submit PDF or DOCX and convert your profile into structured data.</p>
+        </article>
+        <article class="card process-card">
+            <span>02</span>
+            <h3>Analyze Fit</h3>
+            <p class="text-muted">Get score indicators, matched career paths, and market-context insights.</p>
+        </article>
+        <article class="card process-card">
+            <span>03</span>
+            <h3>Improve Faster</h3>
+            <p class="text-muted">Use AI coach recommendations to close gaps and apply with confidence.</p>
+        </article>
+    </div>
+</section>
 
-    <section class="landing-section">
-        <div class="section-head">
-            <h2>Demo Metrics</h2>
-        </div>
-        <div class="stats-showcase">
-            <article class="card stat-show"><p class="big-stat">88</p><p class="text-muted">Resume Score (Demo)</p></article>
-            <article class="card stat-show"><p class="big-stat">26</p><p class="text-muted">Job Matches (Demo)</p></article>
-            <article class="card stat-show"><p class="big-stat">+14%</p><p class="text-muted">Skill Growth (Demo)</p></article>
-            <article class="card stat-show"><p class="big-stat">4.8/5</p><p class="text-muted">UX Satisfaction (Sample)</p></article>
-        </div>
-    </section>
+<section class="container section-block" id="features">
+    <div class="section-head">
+        <h2>Professional Modules</h2>
+        <p class="text-muted">Designed for real career decision-making.</p>
+    </div>
+    <div class="module-grid">
+        <article class="card module-card">
+            <h3>Resume Lab</h3>
+            <p class="text-muted">Evaluate and optimize profile quality against practical role expectations.</p>
+            <a href="/resume/">Open Resume Lab</a>
+        </article>
+        <article class="card module-card">
+            <h3>Opportunity Radar</h3>
+            <p class="text-muted">Review recommendations ranked by semantic fit and demand signals.</p>
+            <a href="/recommendations/">Explore Opportunities</a>
+        </article>
+        <article class="card module-card">
+            <h3>AI Career Coach</h3>
+            <p class="text-muted">Ask focused questions and get contextual guidance instantly.</p>
+            <a href="/chatbot/">Talk to Coach</a>
+        </article>
+    </div>
+</section>
 
-    <section class="landing-section" id="features">
-        <div class="section-head">
-            <h2>Core Features</h2>
-        </div>
-        <div class="feature-grid">
-            <article class="card feature-card">
-                <h3>Resume Scoring</h3>
-                <p class="text-muted">Role-wise feedback and structured improvement plan.</p>
-            </article>
-            <article class="card feature-card">
-                <h3>Job Recommendations</h3>
-                <p class="text-muted">Match-based role cards with skill gap hints.</p>
-            </article>
-            <article class="card feature-card">
-                <h3>AI Coach Chat</h3>
-                <p class="text-muted">ML-ready chat flow with API integration support.</p>
-            </article>
-        </div>
-    </section>
-
-    <section class="landing-section">
-        <div class="section-head">
-            <h2>Feature Comparison</h2>
-        </div>
-        <div class="table-wrap card">
-            <table class="compare-table">
-                <thead>
-                    <tr>
-                        <th>Capability</th>
-                        <th>pathVera</th>
-                        <th>Generic Job Portals</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Resume score with role context</td>
-                        <td>Yes</td>
-                        <td>Limited</td>
-                    </tr>
-                    <tr>
-                        <td>Skill gap with action tips</td>
-                        <td>Yes</td>
-                        <td>No</td>
-                    </tr>
-                    <tr>
-                        <td>AI interview prep coach</td>
-                        <td>Yes</td>
-                        <td>No</td>
-                    </tr>
-                    <tr>
-                        <td>Personalized job ranking</td>
-                        <td>Yes</td>
-                        <td>Basic filters only</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="landing-section">
-        <div class="section-head">
-            <h2>Contact</h2>
-        </div>
-        <form class="card waitlist-form" id="waitlistForm">
-            <div class="waitlist-grid">
-                <input type="text" id="waitlistName" placeholder="Your name" required>
-                <input type="email" id="waitlistEmail" placeholder="Your email" required>
-            </div>
-            <textarea id="waitlistMessage" rows="3" placeholder="Tell us your target role"></textarea>
-            <button type="submit" class="btn btn-primary">Contact</button>
-        </form>
-    </section>
-
-    <section class="landing-section trust-note card">
-        <h3>Privacy First</h3>
-        <p class="text-muted">Your resume and chat data stay private. Sensitive data should be encrypted at rest and in transit when backend is connected.</p>
-    </section>
-
-
-    <section class="landing-section final-cta card">
-        <h2>Get Your Resume Score in Minutes</h2>
-        <p class="text-muted">Start free, improve your profile, and apply with confidence.</p>
-        <div class="hero-actions">
-            <a href="/login/" class="btn btn-primary primary-btn" data-cta-start>Start Free</a>
-            <a href="/login/" class="btn" data-cta-dashboard>Go to Dashboard</a>
-        </div>
-    </section>
-</div>
-    </main>
-
-    <a class="mobile-sticky-cta btn btn-primary primary-btn" href="/login/" data-cta-start>Start Free</a>
-
-    {% include "footer.html" %}
-
-    <script src="../static/js/core.js" defer></script>
-</body>
-</html>
-
+<section class="container section-block final-call card">
+    <h2>Build a stronger candidate profile this week.</h2>
+    <p class="text-muted">Start with resume analysis and track improvements through dashboard metrics.</p>
+    <div class="hero-actions">
+        <a href="/login/" class="btn btn-primary" data-cta-start>Start Free</a>
+        <a href="/dashboard/" class="btn" data-cta-dashboard>Go to Dashboard</a>
+    </div>
+</section>
+{% endblock %}

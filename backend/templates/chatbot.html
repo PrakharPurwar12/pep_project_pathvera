@@ -1,25 +1,19 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Coach - PathVera</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../static/css/base.css">
-    <link rel="stylesheet" href="../static/css/dashboard.css">
-</head>
-<body>
-    {% include "nav.html" %}
+{% extends "base.html" %}
 
-    <main>
+{% block title %}AI Coach | PathVera{% endblock %}
+{% block body_class %}page-chatbot{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/dashboard.css">
+{% endblock %}
+
+{% block content %}
 <div class="container chat-layout fade-in">
     <section class="card chat-panel">
         <div class="chat-toolbar">
             <div>
-                <h3 class="chat-title">pathVera AI Coach</h3>
-                <p class="text-muted">API-ready chat module</p>
+                <h3 class="chat-title">PathVera AI Coach</h3>
+                <p class="text-muted">Get concise guidance for resume, skills, and interview prep.</p>
             </div>
             <button class="btn" id="clearChat" type="button">Clear Chat</button>
         </div>
@@ -32,17 +26,14 @@
         </div>
 
         <form class="chat-form" id="chatForm">
-            <input type="text" id="userInput" placeholder="Ask about resume, interview, jobs..." autocomplete="off">
+            <input type="text" id="userInput" placeholder="Ask about resume, interviews, or role strategy..." autocomplete="off">
             <button type="submit" class="btn btn-primary chat-submit">Send</button>
         </form>
     </section>
 </div>
-    </main>
+{% endblock %}
 
-    {% include "footer.html" %}
-
-    <script src="../static/js/core.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="../static/js/chatbot.js?v=3" defer></script>
-</body>
-</html>
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/static/js/chatbot.js?v=3" defer></script>
+{% endblock %}

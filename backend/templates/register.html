@@ -1,25 +1,25 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - pathVera</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../static/css/base.css">
-    <link rel="stylesheet" href="../static/css/auth.css">
-</head>
-<body>
-    {% include "nav.html" %}
+{% extends "base.html" %}
 
-    <main>
+{% block title %}Register | PathVera{% endblock %}
+{% block body_class %}page-auth{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/auth.css">
+{% endblock %}
+
+{% block content %}
 <div class="auth-page">
-    <div class="container">
+    <div class="container auth-shell">
+        <section class="auth-branding">
+            <span class="badge">Get Started</span>
+            <h1>Create your professional growth workspace.</h1>
+            <p class="text-muted">Set up your account and start tracking resume quality, skill gaps, and role readiness.</p>
+        </section>
+
         <section class="card auth-card fade-in">
             <header class="auth-header">
-                <h1>Create Account</h1>
-                <p class="text-muted">Start your career growth journey.</p>
+                <h2>Create Account</h2>
+                <p class="text-muted">It takes less than a minute.</p>
             </header>
 
             <form class="auth-form" id="registerForm">
@@ -56,19 +56,15 @@
                 </div>
                 <p class="form-hint" id="confirmPasswordError"></p>
 
-                <button type="submit" class="btn btn-primary auth-submit">Sign Up</button>
+                <button type="submit" class="btn btn-primary auth-submit">Create Account</button>
             </form>
 
             <p class="auth-footer">Already have an account? <a href="/login/">Sign in</a></p>
         </section>
     </div>
 </div>
-    </main>
+{% endblock %}
 
-    {% include "footer.html" %}
-
-    <script src="../static/js/core.js" defer></script>
-    <script src="../static/js/auth.js" defer></script>
-</body>
-</html>
-
+{% block extra_js %}
+<script src="/static/js/auth.js" defer></script>
+{% endblock %}

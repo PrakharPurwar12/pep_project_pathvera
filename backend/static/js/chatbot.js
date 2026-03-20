@@ -1,24 +1,26 @@
 document.addEventListener("DOMContentLoaded", () => {
+    import("./features/chatbot.js")
+        .then(({ initChatbot }) => initChatbot())
+        .catch((error) => {
+            console.error("Failed to initialize chatbot feature. Falling back to legacy init:", error);
+            initChatbotLegacy();
+        });
+});
+
+function initChatbotLegacy() {
     const form = document.getElementById("chatForm");
     const input = document.getElementById("userInput");
     const messages = document.getElementById("chatMessages");
     const clearButton = document.getElementById("clearChat");
     const storageKey = "pv-chat-history-v2";
+
     localStorage.removeItem("pv-chat-history");
-
-    if (!form || !input || !messages || !clearButton) {
-        return;
-    }
-
-    // Keep current session chat only; do not restore old messages on refresh.
+    if (!form || !input || !messages || !clearButton) return;
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
-
         const text = input.value.trim();
-        if (!text) {
-            return;
-        }
+        if (!text) return;
 
         appendMessage(text, "user", true);
         input.value = "";
@@ -32,10 +34,11 @@ document.addEventListener("DOMContentLoaded", () => {
     clearButton.addEventListener("click", () => {
         localStorage.removeItem(storageKey);
         messages.innerHTML = "";
-        window.pathVeraUI?.showToast("Chat cleared", "History removed from browser.", "success");
+        if (window.pathVeraUI?.showToast) {
+            window.pathVeraUI.showToast("Chat cleared", "History removed from browser.", "success");
+        }
     });
 
-    // Clear chat history whenever page is reloaded or tab is closed.
     window.addEventListener("beforeunload", () => {
         localStorage.removeItem(storageKey);
     });
@@ -45,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.className = `message ${role}`;
         const content = document.createElement("span");
         content.className = "message-text";
+
         if (role === "bot") {
             content.classList.add("ai-message");
             if (window.marked && typeof window.marked.parse === "function") {
@@ -55,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             content.textContent = String(text || "");
         }
+
         const meta = document.createElement("span");
         meta.className = "message-meta";
         meta.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -80,7 +85,6 @@ document.addEventListener("DOMContentLoaded", () => {
     async function askAssistant(query) {
         const fallbackReply = "AI service is temporarily unavailable. Please try again later.";
         const resumeContext = getResumeContextForChat();
-
         try {
             const response = await fetch("/api/chat/", {
                 method: "POST",
@@ -90,48 +94,37 @@ document.addEventListener("DOMContentLoaded", () => {
                     resume_context: resumeContext
                 })
             });
-
             const data = await response.json().catch(() => null);
-            if (data && typeof data.reply === "string" && data.reply.trim()) {
-                return data.reply;
-            }
-        } catch (error) {
+            if (data && typeof data.reply === "string" && data.reply.trim()) return data.reply;
+        } catch (e) {
             return fallbackReply;
         }
-
         return fallbackReply;
     }
 
     function getResumeContextForChat() {
         const sources = [];
 
-        // Legacy/simple storage key
         try {
             const legacy = JSON.parse(localStorage.getItem("pv_resume_analysis") || "{}");
-            if (legacy && typeof legacy === "object") {
-                sources.push(legacy);
-            }
-        } catch (error) {
+            if (legacy && typeof legacy === "object") sources.push(legacy);
+        } catch (e) {
             // Ignore invalid local data.
         }
 
-        // Current per-user storage used by resume upload flow
         try {
             const username = (localStorage.getItem("pv-user-name") || "").trim().toLowerCase();
             if (username) {
                 const scoped = JSON.parse(localStorage.getItem(`analysisData:${username}`) || "{}");
-                if (scoped && typeof scoped === "object") {
-                    sources.push(scoped);
-                }
+                if (scoped && typeof scoped === "object") sources.push(scoped);
             }
-        } catch (error) {
+        } catch (e) {
             // Ignore invalid local data.
         }
 
         const primary = sources.find((item) => item.parsed_resume || item.recommendations) || sources[0] || {};
         const parsed = primary.parsed_resume || {};
         const recommendations = Array.isArray(primary.recommendations) ? primary.recommendations : [];
-
         const skills = extractSkills(parsed, primary.skills);
         const careerMatches = recommendations
             .map((item) => String(item?.career_title || "").trim())
@@ -148,8 +141,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function extractSkills(parsedResume, fallbackSkills) {
         const set = new Set();
-
         const technical = parsedResume?.technical_skills;
+
         if (technical && typeof technical === "object") {
             Object.values(technical).forEach((group) => {
                 if (Array.isArray(group)) {
@@ -196,6 +189,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }));
         localStorage.setItem(storageKey, JSON.stringify(list));
     }
-
-    // restoreHistory removed intentionally so reload always starts fresh.
-});
+}

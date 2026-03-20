@@ -11,7 +11,17 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EMBEDDING_FILE = os.path.join(BASE_DIR, "models", "profile_embeddings.pkl")
 
-model = SentenceTransformer(MODEL_NAME)
+_model = None
+
+
+def get_model():
+    """
+    Lazily load embedding model so app startup/tests don't fail on import.
+    """
+    global _model
+    if _model is None:
+        _model = SentenceTransformer(MODEL_NAME)
+    return _model
 
 def load_profiles():
     with open(EMBEDDING_FILE, "rb") as f:
@@ -42,6 +52,7 @@ def build_resume_profile(parsed_resume):
     return combined.strip().lower()
 
 def calculate_skill_gap(resume_embedding, career_profile, threshold=0.35):
+    model = get_model()
 
     matched = []
     missing = []
@@ -72,6 +83,7 @@ def get_dynamic_weights(experience_years):
         return 0.8, 0.2
 
 def recommend_careers(parsed_resume, top_k=5):
+    model = get_model()
 
     profiles, profile_embeddings = load_profiles()
 
