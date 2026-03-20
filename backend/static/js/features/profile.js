@@ -7,9 +7,10 @@ import {
 } from "../core/storage.js";
 import { apiRequest } from "../api/apiClient.js";
 
+const PROFILE_PENDING_SYNC_KEY = "pv-profile-pending-sync";
+
 export function initProfile() {
     hydrateDynamicProfile();
-    hydrateFromBackend();
     initProfileEditor();
 }
 
@@ -34,9 +35,7 @@ function hydrateDynamicProfile() {
     const recommendations = Array.isArray(analysis.recommendations) ? analysis.recommendations : [];
 
     const skills = normalizeSkills(parsed.technical_skills);
-    const careerMatches = recommendations
-        .map((item) => cleanText(item?.career_title))
-        .filter(Boolean);
+    const careerMatches = recommendations.map((item) => cleanText(item?.career_title)).filter(Boolean);
     const skillGaps = dedupe(
         recommendations.flatMap((item) => (
             Array.isArray(item?.missing_skills)
@@ -62,113 +61,34 @@ function hydrateDynamicProfile() {
         strengthFill.classList.toggle("low", resumeScore < 50);
     }
     setText("resumeStrengthText", `${resumeScore}% Resume Strength`);
+    setText("aiSummaryText", buildSummary(skills, careerMatches, skillGaps));
 
-    const aiSummary = buildSummary(skills, careerMatches, skillGaps);
-    setText("aiSummaryText", aiSummary);
-
-    const timestamp = new Date();
-    setText("latestAnalysisText", `Latest analysis: ${formatDateTime(timestamp)}`);
+    const now = new Date();
+    setText("latestAnalysisText", `Latest analysis: ${formatDateTime(now)}`);
     renderTimeline("activityTimelineList", [
-        {
-            action: "Resume analyzed and profile insights updated.",
-            timeLabel: formatDateTime(timestamp)
-        },
-        {
-            action: "Profile synced from your current session.",
-            timeLabel: formatDateTime(timestamp)
-        }
+        { action: "Resume analyzed and profile insights updated.", timeLabel: formatDateTime(now) }
     ]);
 }
 
-async function hydrateFromBackend() {
-    try {
-        const data = await apiRequest("/api/profile/summary/", { method: "GET" });
-        const user = asObject(data?.user);
-        const skills = Array.isArray(data?.skills) ? data.skills.map(cleanText).filter(Boolean) : [];
-        const careerMatches = Array.isArray(data?.career_matches) ? data.career_matches.map(cleanText).filter(Boolean) : [];
-        const skillGaps = Array.isArray(data?.skill_gaps) ? data.skill_gaps.map(cleanText).filter(Boolean) : [];
-        const resumeScore = normalizeScore(data?.resume_score);
-
-        setText("profileFullNameValue", cleanText(user.full_name) || cleanText(user.username) || "Not available");
-        setText("profileUsernameValue", cleanText(user.username) || "Not available");
-        setText("profileEmailValue", cleanText(user.email) || "Not available");
-        setText("profileLocationValue", cleanText(data?.location) || cleanText(user.location) || "Not available");
-        syncEditorFields({
-            location: cleanText(data?.location) || cleanText(user.location),
-            phone_number: cleanText(data?.phone_number),
-            bio: cleanText(data?.bio)
-        });
-        setAuthProfile({
-            username: cleanText(user.username),
-            fullName: cleanText(user.full_name) || cleanText(user.username),
-            email: cleanText(user.email),
-            location: cleanText(data?.location) || cleanText(user.location),
-            bio: cleanText(data?.bio)
-        });
-
-        setText("skillsCountTag", `${skills.length} skills detected`);
-        setText("matchesCountTag", `${careerMatches.length} career matches`);
-        setText("gapsCountTag", `${skillGaps.length} skill gaps`);
-        renderActivityList("careerMatchesList", careerMatches, "No career matches available.");
-        renderActivityList("skillGapsList", skillGaps, "No skill gaps detected.");
-        renderSkillTags("detectedSkillsTags", skills, "No skills detected yet.");
-
-        const strengthFill = document.getElementById("resumeStrengthFill");
-        if (strengthFill) {
-            strengthFill.style.width = `${resumeScore}%`;
-            strengthFill.classList.toggle("low", resumeScore < 50);
-        }
-        setText("resumeStrengthText", `${resumeScore}% Resume Strength`);
-        setText("aiSummaryText", cleanText(data?.ai_summary) || buildSummary(skills, careerMatches, skillGaps));
-
-        if (data?.latest_analysis_at) {
-            const parsedDate = new Date(data.latest_analysis_at);
-            setText("latestAnalysisText", `Latest analysis: ${formatDateTime(parsedDate)}`);
-        }
-
-        const backendActivities = Array.isArray(data?.activities)
-            ? data.activities.map((activity) => ({
-                action: cleanText(activity?.action) || "Activity update",
-                timeLabel: activity?.created_at ? formatDateTime(new Date(activity.created_at)) : ""
-            }))
-            : [];
-        if (backendActivities.length) {
-            renderTimeline("activityTimelineList", backendActivities);
-        }
-    } catch (error) {
-        // Local/session-based hydrate above already populated fallback state.
-    }
-}
-
 function initProfileEditor() {
-    const form = document.getElementById("profileEditorForm");
     const locationInput = document.getElementById("profileLocationInput");
     const phoneInput = document.getElementById("profilePhoneInput");
     const bioInput = document.getElementById("profileBioInput");
     const saveState = document.getElementById("profileSaveState");
 
-    if (!form || !locationInput || !phoneInput || !bioInput || !saveState) return;
+    if (!locationInput || !phoneInput || !bioInput || !saveState) return;
 
-    let initialized = false;
-    let lastSavedPayload = {
+    let debounceHandle = null;
+    let lastSaved = {
         location: "",
         phone_number: "",
         bio: ""
     };
-    let debounceHandle = null;
 
-    const syncFromLocal = () => {
-        const profile = getAuthProfile();
-        if (!profile) return;
-        if (!locationInput.value.trim()) locationInput.value = cleanText(profile.location);
-        if (!bioInput.value.trim()) bioInput.value = cleanText(profile.bio);
-    };
-
-    const applySaveState = (label, tone = "muted") => {
-        saveState.textContent = label;
+    const setSaveState = (text, tone = "ok") => {
+        saveState.textContent = text;
         saveState.classList.remove("save-ok", "save-bad");
-        if (tone === "ok") saveState.classList.add("save-ok");
-        if (tone === "bad") saveState.classList.add("save-bad");
+        saveState.classList.add(tone === "bad" ? "save-bad" : "save-ok");
     };
 
     const readPayload = () => ({
@@ -177,99 +97,146 @@ function initProfileEditor() {
         bio: cleanText(bioInput.value)
     });
 
-    const hasChanges = (payload) => (
-        payload.location !== lastSavedPayload.location
-        || payload.phone_number !== lastSavedPayload.phone_number
-        || payload.bio !== lastSavedPayload.bio
-    );
+    const hydrateFromLocal = () => {
+        const profile = getAuthProfile();
+        locationInput.value = cleanText(profile.location);
+        bioInput.value = cleanText(profile.bio);
+        const pending = readPendingSync();
+        if (pending) {
+            locationInput.value = pending.location;
+            phoneInput.value = pending.phone_number;
+            bioInput.value = pending.bio;
+        }
+        lastSaved = readPayload();
+        setSaveState("Local autosave ready");
+    };
 
-    const saveNow = async () => {
+    const saveLocal = (payload) => {
+        setText("profileLocationValue", payload.location || "Not available");
+        setAuthProfile({
+            ...getAuthProfile(),
+            location: payload.location,
+            bio: payload.bio
+        });
+        lastSaved = payload;
+    };
+
+    const saveAndSync = async () => {
         const payload = readPayload();
-        if (!hasChanges(payload)) return;
+        if (
+            payload.location === lastSaved.location
+            && payload.phone_number === lastSaved.phone_number
+            && payload.bio === lastSaved.bio
+        ) {
+            return;
+        }
 
-        applySaveState("Saving...");
+        saveLocal(payload);
+        writePendingSync(payload);
+        setSaveState("Saved locally");
+
+        if (!isServerAuthenticated()) return;
+
         try {
-            const updated = await apiRequest("/api/profiles/me/", {
+            await apiRequest("/api/profiles/me/", {
                 method: "PATCH",
                 body: JSON.stringify(payload)
             });
-
-            lastSavedPayload = {
-                location: cleanText(updated?.location || payload.location),
-                phone_number: cleanText(updated?.phone_number || payload.phone_number),
-                bio: cleanText(updated?.bio || payload.bio)
-            };
-
-            setText("profileLocationValue", lastSavedPayload.location || "Not available");
-            setAuthProfile({
-                ...getAuthProfile(),
-                location: lastSavedPayload.location,
-                bio: lastSavedPayload.bio
-            });
-            applySaveState("Saved just now", "ok");
+            clearPendingSync();
+            setSaveState("Saved to server");
         } catch (error) {
-            // Fallback: keep profile editable even if backend session expires.
-            lastSavedPayload = payload;
-            setText("profileLocationValue", payload.location || "Not available");
-            setAuthProfile({
-                ...getAuthProfile(),
-                location: payload.location,
-                bio: payload.bio
-            });
-            if (error?.status === 401 || error?.status === 403) {
-                applySaveState("Saved locally (login again to sync server)", "bad");
-                return;
-            }
-            applySaveState(error?.message || "Save failed. Try again.", "bad");
+            setSaveState("Saved locally. Server sync pending.");
         }
     };
 
     const scheduleSave = () => {
-        if (!initialized) return;
         if (debounceHandle) window.clearTimeout(debounceHandle);
-        debounceHandle = window.setTimeout(() => {
-            saveNow();
-        }, 650);
+        debounceHandle = window.setTimeout(saveAndSync, 500);
     };
 
-    const initFromBackend = async () => {
-        try {
-            const response = await apiRequest("/api/profiles/me/", { method: "GET" });
-            const payload = {
-                location: cleanText(response?.location),
-                phone_number: cleanText(response?.phone_number),
-                bio: cleanText(response?.bio)
-            };
-            locationInput.value = payload.location;
-            phoneInput.value = payload.phone_number;
-            bioInput.value = payload.bio;
-            lastSavedPayload = payload;
-            applySaveState("Profile loaded");
-        } catch (error) {
-            syncFromLocal();
-            lastSavedPayload = readPayload();
-            applySaveState("Autosave unavailable right now", "bad");
-        } finally {
-            initialized = true;
-        }
-    };
+    locationInput.addEventListener("input", scheduleSave);
+    phoneInput.addEventListener("input", scheduleSave);
+    bioInput.addEventListener("input", scheduleSave);
 
     [locationInput, phoneInput, bioInput].forEach((input) => {
-        input.addEventListener("input", scheduleSave);
-        input.addEventListener("change", scheduleSave);
-        input.addEventListener("blur", saveNow);
+        input.addEventListener("blur", saveAndSync);
     });
 
-    initFromBackend();
+    hydrateFromLocal();
+    hydrateFromServer(locationInput, phoneInput, bioInput, setSaveState, saveLocal);
+    tryFlushPendingSync(setSaveState);
+
+    window.addEventListener("online", () => tryFlushPendingSync(setSaveState));
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            tryFlushPendingSync(setSaveState);
+        }
+    });
 }
 
-function syncEditorFields(profile) {
-    const locationInput = document.getElementById("profileLocationInput");
-    const phoneInput = document.getElementById("profilePhoneInput");
-    const bioInput = document.getElementById("profileBioInput");
-    if (locationInput && !locationInput.value.trim()) locationInput.value = cleanText(profile?.location);
-    if (phoneInput && !phoneInput.value.trim()) phoneInput.value = cleanText(profile?.phone_number);
-    if (bioInput && !bioInput.value.trim()) bioInput.value = cleanText(profile?.bio);
+async function hydrateFromServer(locationInput, phoneInput, bioInput, setSaveState, saveLocal) {
+    if (!isServerAuthenticated()) return;
+    try {
+        const data = await apiRequest("/api/profiles/me/", { method: "GET" });
+        const payload = {
+            location: cleanText(data?.location),
+            phone_number: cleanText(data?.phone_number),
+            bio: cleanText(data?.bio)
+        };
+        locationInput.value = payload.location;
+        phoneInput.value = payload.phone_number;
+        bioInput.value = payload.bio;
+        saveLocal(payload);
+        clearPendingSync();
+        setSaveState("Profile synced");
+    } catch (error) {
+        setSaveState("Local autosave ready");
+    }
+}
+
+async function tryFlushPendingSync(setSaveState) {
+    if (!isServerAuthenticated()) return;
+    const pending = readPendingSync();
+    if (!pending) return;
+    try {
+        await apiRequest("/api/profiles/me/", {
+            method: "PATCH",
+            body: JSON.stringify(pending)
+        });
+        clearPendingSync();
+        setSaveState("Pending changes synced");
+    } catch (error) {
+        setSaveState("Saved locally. Server sync pending.");
+    }
+}
+
+function isServerAuthenticated() {
+    const navNode = document.querySelector("nav[data-server-auth]");
+    return (navNode?.getAttribute("data-server-auth") || "").trim() === "true";
+}
+
+function readPendingSync() {
+    try {
+        const raw = localStorage.getItem(PROFILE_PENDING_SYNC_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        return {
+            location: cleanText(parsed.location),
+            phone_number: cleanText(parsed.phone_number),
+            bio: cleanText(parsed.bio)
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
+function writePendingSync(payload) {
+    localStorage.setItem(PROFILE_PENDING_SYNC_KEY, JSON.stringify(payload));
+}
+
+function clearPendingSync() {
+    localStorage.removeItem(PROFILE_PENDING_SYNC_KEY);
 }
 
 function resolveAnalysisData(currentUser) {
