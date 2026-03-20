@@ -136,7 +136,7 @@ function bindWaitlistForm() {
 
 function setupAuthNav() {
     const authState = resolveAuthState();
-    const { isAuthenticated, username } = authState;
+    const { isAuthenticated, username, isStaff } = authState;
     const dropdownHolder = document.querySelector(".auth-dropdown");
     const toggle = document.getElementById("authToggle");
     const menu = document.getElementById("authMenu");
@@ -145,6 +145,7 @@ function setupAuthNav() {
     const loginItem = menu.querySelector('[data-auth-item="login"]');
     const signupItem = menu.querySelector('[data-auth-item="signup"]');
     const profileItem = menu.querySelector('[data-auth-item="profile"]');
+    const adminItem = menu.querySelector('[data-auth-item="admin"]');
     const logoutItem = document.querySelector('[data-auth-item="logout"]');
     const dashboardItem = document.querySelector('[data-auth-item="dashboard"]');
     const themeToggleButton = document.querySelector("[data-theme-toggle]");
@@ -171,6 +172,7 @@ function setupAuthNav() {
         loginItem?.classList.add("hidden");
         signupItem?.classList.add("hidden");
         profileItem?.classList.remove("hidden");
+        adminItem?.classList.toggle("hidden", !isStaff);
         logoutItem?.classList.remove("hidden");
         dashboardItem?.classList.remove("hidden");
     } else {
@@ -178,6 +180,7 @@ function setupAuthNav() {
         loginItem?.classList.remove("hidden");
         signupItem?.classList.remove("hidden");
         profileItem?.classList.add("hidden");
+        adminItem?.classList.add("hidden");
         logoutItem?.classList.add("hidden");
         dashboardItem?.classList.add("hidden");
     }

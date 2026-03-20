@@ -31,9 +31,12 @@ export function isAuthenticated() {
 
 export function resolveAuthState() {
     const user = getAuthUser();
+    const navNode = document.querySelector("nav[data-server-auth]");
+    const serverStaff = (navNode?.getAttribute("data-server-staff") || "").trim() === "true";
     return {
         isAuthenticated: isAuthenticated(),
-        username: user.username
+        username: user.username,
+        isStaff: serverStaff
     };
 }
 

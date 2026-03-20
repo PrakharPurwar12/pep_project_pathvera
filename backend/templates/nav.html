@@ -1,6 +1,6 @@
 <header class="site-header">
     <div class="container">
-        <nav class="site-nav" data-server-auth="{{ request.user.is_authenticated|yesno:'true,false' }}" data-server-user="{{ request.user.username|default:'' }}">
+        <nav class="site-nav" data-server-auth="{{ request.user.is_authenticated|yesno:'true,false' }}" data-server-user="{{ request.user.username|default:'' }}" data-server-staff="{{ request.user.is_staff|yesno:'true,false' }}">
             <a href="/" class="logo" aria-label="PathVera Home">
                 <span class="logo-icon">PV</span>
                 <span class="logo-wordmark">PathVera</span>
@@ -19,6 +19,7 @@
                         <a href="/login/" data-auth-item="login" role="menuitem">Login</a>
                         <a href="/register/" data-auth-item="signup" role="menuitem">Signup</a>
                         <a href="/profile/" data-auth-item="profile" class="hidden" role="menuitem">Profile</a>
+                        <a href="/admin/" data-auth-item="admin" class="hidden" role="menuitem">Admin</a>
                         <a href="#" data-auth-item="logout" class="hidden" role="menuitem">Logout</a>
                         <button type="button" class="auth-menu-option theme-menu-toggle" id="themeMenuToggle" role="menuitem" data-theme-toggle>
                             Switch to Dark
