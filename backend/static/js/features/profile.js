@@ -2,11 +2,16 @@ import {
     getAuthProfile,
     getCurrentUserName,
     getLegacyResumeAnalysis,
-    readAnalysisForUser
+    readAnalysisForUser,
+    setAuthProfile
 } from "../core/storage.js";
+import { apiRequest } from "../api/apiClient.js";
+
+const PROFILE_PENDING_SYNC_KEY = "pv-profile-pending-sync";
 
 export function initProfile() {
     hydrateDynamicProfile();
+    initProfileEditor();
 }
 
 function hydrateDynamicProfile() {
@@ -30,9 +35,7 @@ function hydrateDynamicProfile() {
     const recommendations = Array.isArray(analysis.recommendations) ? analysis.recommendations : [];
 
     const skills = normalizeSkills(parsed.technical_skills);
-    const careerMatches = recommendations
-        .map((item) => cleanText(item?.career_title))
-        .filter(Boolean);
+    const careerMatches = recommendations.map((item) => cleanText(item?.career_title)).filter(Boolean);
     const skillGaps = dedupe(
         recommendations.flatMap((item) => (
             Array.isArray(item?.missing_skills)
@@ -58,22 +61,182 @@ function hydrateDynamicProfile() {
         strengthFill.classList.toggle("low", resumeScore < 50);
     }
     setText("resumeStrengthText", `${resumeScore}% Resume Strength`);
+    setText("aiSummaryText", buildSummary(skills, careerMatches, skillGaps));
 
-    const aiSummary = buildSummary(skills, careerMatches, skillGaps);
-    setText("aiSummaryText", aiSummary);
-
-    const timestamp = new Date();
-    setText("latestAnalysisText", `Latest analysis: ${formatDateTime(timestamp)}`);
+    const now = new Date();
+    setText("latestAnalysisText", `Latest analysis: ${formatDateTime(now)}`);
     renderTimeline("activityTimelineList", [
-        {
-            action: "Resume analyzed and profile insights updated.",
-            timeLabel: formatDateTime(timestamp)
-        },
-        {
-            action: "Profile synced from your current session.",
-            timeLabel: formatDateTime(timestamp)
-        }
+        { action: "Resume analyzed and profile insights updated.", timeLabel: formatDateTime(now) }
     ]);
+}
+
+function initProfileEditor() {
+    const locationInput = document.getElementById("profileLocationInput");
+    const phoneInput = document.getElementById("profilePhoneInput");
+    const bioInput = document.getElementById("profileBioInput");
+    const saveState = document.getElementById("profileSaveState");
+
+    if (!locationInput || !phoneInput || !bioInput || !saveState) return;
+
+    let debounceHandle = null;
+    let lastSaved = {
+        location: "",
+        phone_number: "",
+        bio: ""
+    };
+
+    const setSaveState = (text, tone = "ok") => {
+        saveState.textContent = text;
+        saveState.classList.remove("save-ok", "save-bad");
+        saveState.classList.add(tone === "bad" ? "save-bad" : "save-ok");
+    };
+
+    const readPayload = () => ({
+        location: cleanText(locationInput.value),
+        phone_number: cleanText(phoneInput.value),
+        bio: cleanText(bioInput.value)
+    });
+
+    const hydrateFromLocal = () => {
+        const profile = getAuthProfile();
+        locationInput.value = cleanText(profile.location);
+        bioInput.value = cleanText(profile.bio);
+        const pending = readPendingSync();
+        if (pending) {
+            locationInput.value = pending.location;
+            phoneInput.value = pending.phone_number;
+            bioInput.value = pending.bio;
+        }
+        lastSaved = readPayload();
+        setSaveState("Local autosave ready");
+    };
+
+    const saveLocal = (payload) => {
+        setText("profileLocationValue", payload.location || "Not available");
+        setAuthProfile({
+            ...getAuthProfile(),
+            location: payload.location,
+            bio: payload.bio
+        });
+        lastSaved = payload;
+    };
+
+    const saveAndSync = async () => {
+        const payload = readPayload();
+        if (
+            payload.location === lastSaved.location
+            && payload.phone_number === lastSaved.phone_number
+            && payload.bio === lastSaved.bio
+        ) {
+            return;
+        }
+
+        saveLocal(payload);
+        writePendingSync(payload);
+        setSaveState("Saved locally");
+
+        if (!isServerAuthenticated()) return;
+
+        try {
+            await apiRequest("/api/profiles/me/", {
+                method: "PATCH",
+                body: JSON.stringify(payload)
+            });
+            clearPendingSync();
+            setSaveState("Saved to server");
+        } catch (error) {
+            setSaveState("Saved locally. Server sync pending.");
+        }
+    };
+
+    const scheduleSave = () => {
+        if (debounceHandle) window.clearTimeout(debounceHandle);
+        debounceHandle = window.setTimeout(saveAndSync, 500);
+    };
+
+    locationInput.addEventListener("input", scheduleSave);
+    phoneInput.addEventListener("input", scheduleSave);
+    bioInput.addEventListener("input", scheduleSave);
+
+    [locationInput, phoneInput, bioInput].forEach((input) => {
+        input.addEventListener("blur", saveAndSync);
+    });
+
+    hydrateFromLocal();
+    hydrateFromServer(locationInput, phoneInput, bioInput, setSaveState, saveLocal);
+    tryFlushPendingSync(setSaveState);
+
+    window.addEventListener("online", () => tryFlushPendingSync(setSaveState));
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            tryFlushPendingSync(setSaveState);
+        }
+    });
+}
+
+async function hydrateFromServer(locationInput, phoneInput, bioInput, setSaveState, saveLocal) {
+    if (!isServerAuthenticated()) return;
+    try {
+        const data = await apiRequest("/api/profiles/me/", { method: "GET" });
+        const payload = {
+            location: cleanText(data?.location),
+            phone_number: cleanText(data?.phone_number),
+            bio: cleanText(data?.bio)
+        };
+        locationInput.value = payload.location;
+        phoneInput.value = payload.phone_number;
+        bioInput.value = payload.bio;
+        saveLocal(payload);
+        clearPendingSync();
+        setSaveState("Profile synced");
+    } catch (error) {
+        setSaveState("Local autosave ready");
+    }
+}
+
+async function tryFlushPendingSync(setSaveState) {
+    if (!isServerAuthenticated()) return;
+    const pending = readPendingSync();
+    if (!pending) return;
+    try {
+        await apiRequest("/api/profiles/me/", {
+            method: "PATCH",
+            body: JSON.stringify(pending)
+        });
+        clearPendingSync();
+        setSaveState("Pending changes synced");
+    } catch (error) {
+        setSaveState("Saved locally. Server sync pending.");
+    }
+}
+
+function isServerAuthenticated() {
+    const navNode = document.querySelector("nav[data-server-auth]");
+    return (navNode?.getAttribute("data-server-auth") || "").trim() === "true";
+}
+
+function readPendingSync() {
+    try {
+        const raw = localStorage.getItem(PROFILE_PENDING_SYNC_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        return {
+            location: cleanText(parsed.location),
+            phone_number: cleanText(parsed.phone_number),
+            bio: cleanText(parsed.bio)
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
+function writePendingSync(payload) {
+    localStorage.setItem(PROFILE_PENDING_SYNC_KEY, JSON.stringify(payload));
+}
+
+function clearPendingSync() {
+    localStorage.removeItem(PROFILE_PENDING_SYNC_KEY);
 }
 
 function resolveAnalysisData(currentUser) {
