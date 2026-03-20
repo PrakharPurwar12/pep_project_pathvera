@@ -5,6 +5,18 @@ function mergeHeaders(defaultHeaders, customHeaders) {
     return headers;
 }
 
+function getCsrfToken() {
+    const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    if (metaToken && metaToken !== "NOTPROVIDED") return metaToken;
+
+    const cookieToken = document.cookie
+        .split(";")
+        .map((item) => item.trim())
+        .find((item) => item.startsWith("csrftoken="));
+    if (!cookieToken) return "";
+    return decodeURIComponent(cookieToken.split("=").slice(1).join("="));
+}
+
 async function parseResponsePayload(response) {
     if (response.status === 204) return null;
     const contentType = response.headers.get("content-type") || "";
@@ -28,8 +40,14 @@ export async function apiRequest(url, options = {}) {
     const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
     const defaultHeaders = isFormData ? {} : { "Content-Type": "application/json" };
     const headers = mergeHeaders(defaultHeaders, customHeaders);
+    const method = String(rest.method || "GET").toUpperCase();
+    if (!["GET", "HEAD", "OPTIONS", "TRACE"].includes(method)) {
+        const csrfToken = getCsrfToken();
+        if (csrfToken) headers.set("X-CSRFToken", csrfToken);
+    }
 
     const response = await fetch(url, {
+        credentials: "same-origin",
         ...rest,
         headers,
         body

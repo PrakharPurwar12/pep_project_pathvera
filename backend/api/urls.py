@@ -13,6 +13,11 @@ from .views import (
     recommendations_page,
     register_page,
     resume_page,
+    auth_register_api,
+    auth_login_api,
+    auth_logout_api,
+    auth_session_api,
+    profile_summary_api,
     # ViewSets
     UserProfileViewSet,
     ResumeViewSet,
@@ -49,6 +54,12 @@ urlpatterns = [
     path("profile", profile_page),
     path("login", login_page),
     path("register", register_page),
+    # Session auth endpoints for frontend
+    path("api/auth/register/", auth_register_api, name="auth_register_api"),
+    path("api/auth/login/", auth_login_api, name="auth_login_api"),
+    path("api/auth/logout/", auth_logout_api, name="auth_logout_api"),
+    path("api/auth/session/", auth_session_api, name="auth_session_api"),
+    path("api/profile/summary/", profile_summary_api, name="profile_summary_api"),
     # Legacy endpoint
     path("analyze/", analyze_resume, name="analyze_resume"),
     path("api/chat/", chat_api, name="chat_api"),

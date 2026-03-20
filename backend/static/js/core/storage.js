@@ -51,6 +51,9 @@ export function setAuthProfile(profile) {
 export function clearAuthSession() {
     localStorage.removeItem(STORAGE_KEYS.userName);
     localStorage.removeItem(STORAGE_KEYS.userFullName);
+    localStorage.removeItem(STORAGE_KEYS.userEmail);
+    localStorage.removeItem(STORAGE_KEYS.profileLocation);
+    localStorage.removeItem(STORAGE_KEYS.profileBio);
     localStorage.removeItem(STORAGE_KEYS.chatHistory);
 }
 

@@ -26,7 +26,10 @@ export function getAuthUser() {
 }
 
 export function isAuthenticated() {
-    return Boolean(getAuthProfile().username);
+    const localUser = getAuthProfile().username;
+    const navNode = document.querySelector("nav[data-server-auth]");
+    const serverAuth = (navNode?.getAttribute("data-server-auth") || "").trim() === "true";
+    return serverAuth || Boolean(localUser);
 }
 
 export function resolveAuthState() {

@@ -4,9 +4,13 @@ import logging
 import tempfile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -52,21 +56,27 @@ class ProtectedView(APIView):
 
 #Frontend Pages
 
+@ensure_csrf_cookie
 def index_page(request):
     return render(request, "index.html")
 
+@ensure_csrf_cookie
 def resume_page(request):
     return render(request, "resume.html")
 
+@ensure_csrf_cookie
 def dashboard_page(request):
     return render(request, "dashboard.html")
 
+@ensure_csrf_cookie
 def recommendations_page(request):
     return render(request, "recommendations.html")
 
+@ensure_csrf_cookie
 def chatbot_page(request):
     return render(request, "chatbot.html")
 
+@ensure_csrf_cookie
 def profile_page(request):
     profile = None
     resume = None
@@ -99,9 +109,153 @@ def profile_page(request):
     }
     return render(request, "profile.html", context)
 
+
+def _split_full_name(full_name):
+    parts = str(full_name or "").strip().split()
+    if not parts:
+        return "", ""
+    first_name = parts[0]
+    last_name = " ".join(parts[1:]) if len(parts) > 1 else ""
+    return first_name, last_name
+
+
+def _serialize_auth_user(user):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    return {
+        "id": user.id,
+        "username": user.username,
+        "full_name": user.get_full_name().strip() or user.username,
+        "email": user.email or "",
+        "location": profile.location or "",
+        "bio": profile.bio or "",
+        "is_staff": bool(user.is_staff),
+    }
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def auth_register_api(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+    full_name = str(payload.get("full_name", "")).strip()
+    username = str(payload.get("username", "")).strip()
+    email = str(payload.get("email", "")).strip().lower()
+    password = str(payload.get("password", ""))
+
+    if not full_name or not username or not email or not password:
+        return JsonResponse({"error": "All fields are required."}, status=400)
+
+    if User.objects.filter(username__iexact=username).exists():
+        return JsonResponse({"error": "Username already taken."}, status=400)
+
+    if User.objects.filter(email__iexact=email).exists():
+        return JsonResponse({"error": "Email already registered."}, status=400)
+
+    temp_user = User(username=username, email=email)
+    first_name, last_name = _split_full_name(full_name)
+    temp_user.first_name = first_name
+    temp_user.last_name = last_name
+
+    try:
+        validate_password(password, user=temp_user)
+    except ValidationError as validation_error:
+        message = validation_error.messages[0] if validation_error.messages else "Password is not valid."
+        return JsonResponse({"error": message}, status=400)
+
+    user = User.objects.create_user(
+        username=username,
+        email=email,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+    )
+    UserProfile.objects.get_or_create(user=user)
+    return JsonResponse({"message": "Registration successful."}, status=201)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def auth_login_api(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+    identifier = str(payload.get("login_id", "")).strip()
+    password = str(payload.get("password", ""))
+
+    if not identifier or not password:
+        return JsonResponse({"error": "Email/username and password are required."}, status=400)
+
+    candidate = User.objects.filter(email__iexact=identifier).first()
+    username = candidate.username if candidate else identifier
+    user = authenticate(request, username=username, password=password)
+
+    if user is None:
+        return JsonResponse({"error": "Invalid credentials."}, status=401)
+
+    django_login(request, user)
+    UserProfile.objects.get_or_create(user=user)
+    return JsonResponse({"user": _serialize_auth_user(user)})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def auth_logout_api(request):
+    django_logout(request)
+    return JsonResponse({"message": "Logged out successfully."})
+
+
+@require_http_methods(["GET"])
+def auth_session_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Not authenticated."}, status=401)
+    return JsonResponse({"user": _serialize_auth_user(request.user)})
+
+
+@require_http_methods(["GET"])
+def profile_summary_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Not authenticated."}, status=401)
+
+    profile = UserProfile.objects.filter(user=request.user).first()
+    resume = ResumeAnalysis.objects.filter(user=request.user).order_by("-created_at").first()
+    activities = list(UserActivity.objects.filter(user=request.user).order_by("-created_at")[:8])
+
+    skills = _normalize_context_list(resume.skills if resume else [])
+    career_matches = _normalize_context_list(resume.career_matches if resume else [])
+    skill_gaps = _normalize_context_list(resume.skill_gaps if resume else [])
+    resume_score = max(0, min(100, int(resume.resume_score if resume else 0)))
+    ai_summary = generate_ai_career_summary(skills, career_matches)
+
+    return JsonResponse({
+        "user": _serialize_auth_user(request.user),
+        "location": profile.location if profile else "",
+        "phone_number": profile.phone_number if profile and profile.phone_number else "",
+        "bio": profile.bio if profile and profile.bio else "",
+        "skills": skills,
+        "career_matches": career_matches,
+        "skill_gaps": skill_gaps,
+        "resume_score": resume_score,
+        "ai_summary": ai_summary,
+        "latest_analysis_at": resume.created_at.isoformat() if resume else None,
+        "activities": [
+            {
+                "action": activity.action,
+                "created_at": activity.created_at.isoformat(),
+            }
+            for activity in activities
+        ],
+    })
+
+@ensure_csrf_cookie
 def login_page(request):
     return render(request, "login.html")
 
+@ensure_csrf_cookie
 def register_page(request):
     return render(request, "register.html")
 
@@ -309,12 +463,18 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         obj, created = UserProfile.objects.get_or_create(user=self.request.user)
         return obj
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
-        """Get current user's profile"""
         profile, created = UserProfile.objects.get_or_create(user=request.user)
-        serializer = self.get_serializer(profile)
-        return Response(serializer.data)
+        if request.method == "GET":
+            serializer = self.get_serializer(profile)
+            return Response(serializer.data)
+
+        serializer = self.get_serializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
     def update_profile(self, request):

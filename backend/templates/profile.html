@@ -50,6 +50,22 @@
                 </div>
             </article>
 
+            <article class="card profile-editor-card">
+                <h2>Edit Profile</h2>
+                <p class="text-muted">Location, phone, and bio are saved automatically.</p>
+                <form id="profileEditorForm" class="profile-editor-form" novalidate>
+                    <label for="profileLocationInput">Location</label>
+                    <input type="text" id="profileLocationInput" name="location" placeholder="City, Country">
+
+                    <label for="profilePhoneInput">Phone</label>
+                    <input type="tel" id="profilePhoneInput" name="phone_number" placeholder="+91 98XXXXXXXX">
+
+                    <label for="profileBioInput">Bio</label>
+                    <textarea id="profileBioInput" name="bio" rows="4" placeholder="Write a short professional bio"></textarea>
+                </form>
+                <p class="text-muted profile-save-state" id="profileSaveState" aria-live="polite">No changes yet.</p>
+            </article>
+
             <article class="card">
                 <h2>Resume Insights</h2>
                 {% if latest_analysis_at %}

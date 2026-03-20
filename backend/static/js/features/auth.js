@@ -1,4 +1,5 @@
-import { clearIdentity, getUsers, saveUsers, setAuthSession } from "../core/storage.js";
+import { apiRequest } from "../api/apiClient.js";
+import { clearIdentity, setAuthProfile, setAuthSession } from "../core/storage.js";
 import { showToast } from "../core/ui.js";
 
 export function initAuth() {
@@ -27,32 +28,40 @@ export function initAuth() {
             }
 
             if (hasError) return;
-
-            const users = getUsers();
-            const identifier = loginId.value.trim().toLowerCase();
-            const matchedUser = users.find((user) =>
-                user.email.toLowerCase() === identifier || user.username.toLowerCase() === identifier
-            );
-
-            if (!matchedUser) {
-                setError("loginIdError", "No account found with this email/username.");
-                return;
-            }
-
-            if (matchedUser.password !== password.value) {
-                setError("passwordError", "Incorrect password.");
-                return;
-            }
-
-            setAuthSession({
-                username: matchedUser.username,
-                fullName: matchedUser.fullName,
-                email: matchedUser.email
-            });
-            showToast("Login successful", `Welcome ${matchedUser.username}`, "success");
-            setTimeout(() => {
-                window.location.href = "/";
-            }, 500);
+            const identifier = loginId.value.trim();
+            apiRequest("/api/auth/login/", {
+                method: "POST",
+                body: JSON.stringify({
+                    login_id: identifier,
+                    password: password.value
+                })
+            })
+                .then((data) => {
+                    const user = data?.user || {};
+                    setAuthSession({
+                        username: user.username || "",
+                        fullName: user.full_name || user.username || "",
+                        email: user.email || ""
+                    });
+                    setAuthProfile({
+                        username: user.username || "",
+                        fullName: user.full_name || user.username || "",
+                        email: user.email || "",
+                        location: user.location || "",
+                        bio: user.bio || ""
+                    });
+                    showToast("Login successful", `Welcome ${user.username || "back"}`, "success");
+                    setTimeout(() => {
+                        window.location.href = "/";
+                    }, 350);
+                })
+                .catch((error) => {
+                    if (error?.status === 401) {
+                        setError("passwordError", "Incorrect credentials.");
+                        return;
+                    }
+                    setError("loginIdError", error.message || "Login failed.");
+                });
         });
     }
 
@@ -86,33 +95,38 @@ export function initAuth() {
                 hasError = true;
             }
             if (hasError) return;
-
-            const users = getUsers();
-            const emailExists = users.some((user) => user.email.toLowerCase() === email.toLowerCase());
-            const usernameExists = users.some((user) => user.username.toLowerCase() === username.toLowerCase());
-
-            if (emailExists) {
-                setError("emailError", "Email already registered.");
-                return;
-            }
-            if (usernameExists) {
-                setError("usernameError", "Username already taken.");
-                return;
-            }
-
-            users.push({
-                fullName,
-                username,
-                email,
-                password
-            });
-            saveUsers(users);
-
-            clearIdentity();
-            showToast("Registration successful", "Please sign in to continue.", "success");
-            setTimeout(() => {
-                window.location.href = "/login/";
-            }, 500);
+            apiRequest("/api/auth/register/", {
+                method: "POST",
+                body: JSON.stringify({
+                    full_name: fullName,
+                    username,
+                    email,
+                    password
+                })
+            })
+                .then(() => {
+                    clearIdentity();
+                    showToast("Registration successful", "Please sign in to continue.", "success");
+                    setTimeout(() => {
+                        window.location.href = "/login/";
+                    }, 350);
+                })
+                .catch((error) => {
+                    const message = (error?.message || "").toLowerCase();
+                    if (message.includes("username")) {
+                        setError("usernameError", error.message);
+                        return;
+                    }
+                    if (message.includes("email")) {
+                        setError("emailError", error.message);
+                        return;
+                    }
+                    if (message.includes("password")) {
+                        setError("passwordError", error.message);
+                        return;
+                    }
+                    setError("registerError", error.message || "Registration failed.");
+                });
         });
     }
 }

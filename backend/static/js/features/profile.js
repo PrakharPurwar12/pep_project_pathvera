@@ -2,11 +2,15 @@ import {
     getAuthProfile,
     getCurrentUserName,
     getLegacyResumeAnalysis,
-    readAnalysisForUser
+    readAnalysisForUser,
+    setAuthProfile
 } from "../core/storage.js";
+import { apiRequest } from "../api/apiClient.js";
 
 export function initProfile() {
     hydrateDynamicProfile();
+    hydrateFromBackend();
+    initProfileEditor();
 }
 
 function hydrateDynamicProfile() {
@@ -74,6 +78,198 @@ function hydrateDynamicProfile() {
             timeLabel: formatDateTime(timestamp)
         }
     ]);
+}
+
+async function hydrateFromBackend() {
+    try {
+        const data = await apiRequest("/api/profile/summary/", { method: "GET" });
+        const user = asObject(data?.user);
+        const skills = Array.isArray(data?.skills) ? data.skills.map(cleanText).filter(Boolean) : [];
+        const careerMatches = Array.isArray(data?.career_matches) ? data.career_matches.map(cleanText).filter(Boolean) : [];
+        const skillGaps = Array.isArray(data?.skill_gaps) ? data.skill_gaps.map(cleanText).filter(Boolean) : [];
+        const resumeScore = normalizeScore(data?.resume_score);
+
+        setText("profileFullNameValue", cleanText(user.full_name) || cleanText(user.username) || "Not available");
+        setText("profileUsernameValue", cleanText(user.username) || "Not available");
+        setText("profileEmailValue", cleanText(user.email) || "Not available");
+        setText("profileLocationValue", cleanText(data?.location) || cleanText(user.location) || "Not available");
+        syncEditorFields({
+            location: cleanText(data?.location) || cleanText(user.location),
+            phone_number: cleanText(data?.phone_number),
+            bio: cleanText(data?.bio)
+        });
+        setAuthProfile({
+            username: cleanText(user.username),
+            fullName: cleanText(user.full_name) || cleanText(user.username),
+            email: cleanText(user.email),
+            location: cleanText(data?.location) || cleanText(user.location),
+            bio: cleanText(data?.bio)
+        });
+
+        setText("skillsCountTag", `${skills.length} skills detected`);
+        setText("matchesCountTag", `${careerMatches.length} career matches`);
+        setText("gapsCountTag", `${skillGaps.length} skill gaps`);
+        renderActivityList("careerMatchesList", careerMatches, "No career matches available.");
+        renderActivityList("skillGapsList", skillGaps, "No skill gaps detected.");
+        renderSkillTags("detectedSkillsTags", skills, "No skills detected yet.");
+
+        const strengthFill = document.getElementById("resumeStrengthFill");
+        if (strengthFill) {
+            strengthFill.style.width = `${resumeScore}%`;
+            strengthFill.classList.toggle("low", resumeScore < 50);
+        }
+        setText("resumeStrengthText", `${resumeScore}% Resume Strength`);
+        setText("aiSummaryText", cleanText(data?.ai_summary) || buildSummary(skills, careerMatches, skillGaps));
+
+        if (data?.latest_analysis_at) {
+            const parsedDate = new Date(data.latest_analysis_at);
+            setText("latestAnalysisText", `Latest analysis: ${formatDateTime(parsedDate)}`);
+        }
+
+        const backendActivities = Array.isArray(data?.activities)
+            ? data.activities.map((activity) => ({
+                action: cleanText(activity?.action) || "Activity update",
+                timeLabel: activity?.created_at ? formatDateTime(new Date(activity.created_at)) : ""
+            }))
+            : [];
+        if (backendActivities.length) {
+            renderTimeline("activityTimelineList", backendActivities);
+        }
+    } catch (error) {
+        // Local/session-based hydrate above already populated fallback state.
+    }
+}
+
+function initProfileEditor() {
+    const form = document.getElementById("profileEditorForm");
+    const locationInput = document.getElementById("profileLocationInput");
+    const phoneInput = document.getElementById("profilePhoneInput");
+    const bioInput = document.getElementById("profileBioInput");
+    const saveState = document.getElementById("profileSaveState");
+
+    if (!form || !locationInput || !phoneInput || !bioInput || !saveState) return;
+
+    let initialized = false;
+    let lastSavedPayload = {
+        location: "",
+        phone_number: "",
+        bio: ""
+    };
+    let debounceHandle = null;
+
+    const syncFromLocal = () => {
+        const profile = getAuthProfile();
+        if (!profile) return;
+        if (!locationInput.value.trim()) locationInput.value = cleanText(profile.location);
+        if (!bioInput.value.trim()) bioInput.value = cleanText(profile.bio);
+    };
+
+    const applySaveState = (label, tone = "muted") => {
+        saveState.textContent = label;
+        saveState.classList.remove("save-ok", "save-bad");
+        if (tone === "ok") saveState.classList.add("save-ok");
+        if (tone === "bad") saveState.classList.add("save-bad");
+    };
+
+    const readPayload = () => ({
+        location: cleanText(locationInput.value),
+        phone_number: cleanText(phoneInput.value),
+        bio: cleanText(bioInput.value)
+    });
+
+    const hasChanges = (payload) => (
+        payload.location !== lastSavedPayload.location
+        || payload.phone_number !== lastSavedPayload.phone_number
+        || payload.bio !== lastSavedPayload.bio
+    );
+
+    const saveNow = async () => {
+        const payload = readPayload();
+        if (!hasChanges(payload)) return;
+
+        applySaveState("Saving...");
+        try {
+            const updated = await apiRequest("/api/profiles/me/", {
+                method: "PATCH",
+                body: JSON.stringify(payload)
+            });
+
+            lastSavedPayload = {
+                location: cleanText(updated?.location || payload.location),
+                phone_number: cleanText(updated?.phone_number || payload.phone_number),
+                bio: cleanText(updated?.bio || payload.bio)
+            };
+
+            setText("profileLocationValue", lastSavedPayload.location || "Not available");
+            setAuthProfile({
+                ...getAuthProfile(),
+                location: lastSavedPayload.location,
+                bio: lastSavedPayload.bio
+            });
+            applySaveState("Saved just now", "ok");
+        } catch (error) {
+            // Fallback: keep profile editable even if backend session expires.
+            lastSavedPayload = payload;
+            setText("profileLocationValue", payload.location || "Not available");
+            setAuthProfile({
+                ...getAuthProfile(),
+                location: payload.location,
+                bio: payload.bio
+            });
+            if (error?.status === 401 || error?.status === 403) {
+                applySaveState("Saved locally (login again to sync server)", "bad");
+                return;
+            }
+            applySaveState(error?.message || "Save failed. Try again.", "bad");
+        }
+    };
+
+    const scheduleSave = () => {
+        if (!initialized) return;
+        if (debounceHandle) window.clearTimeout(debounceHandle);
+        debounceHandle = window.setTimeout(() => {
+            saveNow();
+        }, 650);
+    };
+
+    const initFromBackend = async () => {
+        try {
+            const response = await apiRequest("/api/profiles/me/", { method: "GET" });
+            const payload = {
+                location: cleanText(response?.location),
+                phone_number: cleanText(response?.phone_number),
+                bio: cleanText(response?.bio)
+            };
+            locationInput.value = payload.location;
+            phoneInput.value = payload.phone_number;
+            bioInput.value = payload.bio;
+            lastSavedPayload = payload;
+            applySaveState("Profile loaded");
+        } catch (error) {
+            syncFromLocal();
+            lastSavedPayload = readPayload();
+            applySaveState("Autosave unavailable right now", "bad");
+        } finally {
+            initialized = true;
+        }
+    };
+
+    [locationInput, phoneInput, bioInput].forEach((input) => {
+        input.addEventListener("input", scheduleSave);
+        input.addEventListener("change", scheduleSave);
+        input.addEventListener("blur", saveNow);
+    });
+
+    initFromBackend();
+}
+
+function syncEditorFields(profile) {
+    const locationInput = document.getElementById("profileLocationInput");
+    const phoneInput = document.getElementById("profilePhoneInput");
+    const bioInput = document.getElementById("profileBioInput");
+    if (locationInput && !locationInput.value.trim()) locationInput.value = cleanText(profile?.location);
+    if (phoneInput && !phoneInput.value.trim()) phoneInput.value = cleanText(profile?.phone_number);
+    if (bioInput && !bioInput.value.trim()) bioInput.value = cleanText(profile?.bio);
 }
 
 function resolveAnalysisData(currentUser) {

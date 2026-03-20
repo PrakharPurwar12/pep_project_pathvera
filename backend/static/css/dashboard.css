@@ -536,6 +536,39 @@
     font-size: 0.95rem;
 }
 
+.profile-editor-card {
+    display: grid;
+    gap: 10px;
+}
+
+.profile-editor-form {
+    display: grid;
+    gap: 8px;
+}
+
+.profile-editor-form label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.profile-editor-form textarea {
+    resize: vertical;
+    min-height: 92px;
+}
+
+.profile-save-state {
+    font-size: 0.82rem;
+}
+
+.profile-save-state.save-ok {
+    color: var(--success);
+}
+
+.profile-save-state.save-bad {
+    color: var(--danger);
+}
+
 @media (max-width: 980px) {
     .dashboard-grid,
     .stats-grid,

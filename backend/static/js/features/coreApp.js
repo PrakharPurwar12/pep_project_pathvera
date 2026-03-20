@@ -1,6 +1,7 @@
 import { enforceAuthAccess, resolveAuthState } from "../core/authState.js";
-import { clearAuthSession, getAuthProfile } from "../core/storage.js";
+import { clearAuthSession, getAuthProfile, setAuthProfile, setAuthSession } from "../core/storage.js";
 import { registerLegacyUiBridge, showToast } from "../core/ui.js";
+import { apiRequest } from "../api/apiClient.js";
 
 const THEME_STORAGE_KEY = "pv-theme";
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -13,6 +14,7 @@ export function initCoreApp() {
     bindThemeToggle();
     bindFaq();
     applyUserProfile();
+    syncAuthFromServer();
     normalizeInternalLinksForStaticMode();
     const authState = setupAuthNav();
     setupLandingCtas(authState);
@@ -20,6 +22,31 @@ export function initCoreApp() {
     initScrollReveal();
     bindPageTransitions();
     initHeroDynamics();
+}
+
+function syncAuthFromServer() {
+    const navNode = document.querySelector("nav[data-server-auth]");
+    if (!navNode) return;
+    const serverAuth = (navNode.getAttribute("data-server-auth") || "").trim() === "true";
+    if (!serverAuth) return;
+
+    const localProfile = getAuthProfile();
+    const serverUser = (navNode.getAttribute("data-server-user") || "").trim();
+    if (!serverUser || localProfile.username) return;
+
+    setAuthSession({
+        username: serverUser,
+        fullName: serverUser,
+        email: localProfile.email || ""
+    });
+    setAuthProfile({
+        username: serverUser,
+        fullName: localProfile.fullName || serverUser,
+        email: localProfile.email || "",
+        location: localProfile.location || "",
+        bio: localProfile.bio || ""
+    });
+    applyUserProfile();
 }
 
 function bindThemeToggle() {
@@ -208,11 +235,15 @@ function setupAuthNav() {
     if (logoutItem) {
         logoutItem.addEventListener("click", (event) => {
             event.preventDefault();
-            clearAuthSession();
-            showToast("Logged out", "You have been signed out.", "success");
-            setTimeout(() => {
-                window.location.href = "/login/";
-            }, 250);
+            apiRequest("/api/auth/logout/", { method: "POST" })
+                .catch(() => null)
+                .finally(() => {
+                    clearAuthSession();
+                    showToast("Logged out", "You have been signed out.", "success");
+                    setTimeout(() => {
+                        window.location.href = "/login/";
+                    }, 250);
+                });
         });
     }
 
