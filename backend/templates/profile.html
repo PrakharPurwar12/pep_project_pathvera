@@ -11,8 +11,8 @@
 <div class="container dashboard-grid fade-in">
     <aside class="sidebar">
         <div class="card profile-card">
-            <div class="avatar">{{ profile_user.username|default:"PV"|slice:":2"|upper }}</div>
-            <h3>{{ profile_user.get_full_name|default:profile_user.username|default:"User" }}</h3>
+            <div class="avatar" data-user-initials>{{ profile_user.username|default:"PV"|slice:":2"|upper }}</div>
+            <h3 data-user-name>{{ profile_user.get_full_name|default:profile_user.username|default:"User" }}</h3>
             <p class="text-muted">Career Profile</p>
         </div>
         <nav class="sidebar-nav">
@@ -43,30 +43,30 @@
             <article class="card">
                 <h2>User Information</h2>
                 <div class="activity-list">
-                    <div class="activity-item"><div><p class="activity-title">Full Name</p><p class="text-muted">{{ profile_user.get_full_name|default:profile_user.username|default:"Not available" }}</p></div></div>
-                    <div class="activity-item"><div><p class="activity-title">Username</p><p class="text-muted">{{ profile_user.username|default:"Not available" }}</p></div></div>
-                    <div class="activity-item"><div><p class="activity-title">Email</p><p class="text-muted">{{ profile_user.email|default:"Not available" }}</p></div></div>
-                    <div class="activity-item"><div><p class="activity-title">Location</p><p class="text-muted">{{ profile_details.location|default:"Not available" }}</p></div></div>
+                    <div class="activity-item"><div><p class="activity-title">Full Name</p><p class="text-muted" id="profileFullNameValue">{{ profile_user.get_full_name|default:profile_user.username|default:"Not available" }}</p></div></div>
+                    <div class="activity-item"><div><p class="activity-title">Username</p><p class="text-muted" id="profileUsernameValue">{{ profile_user.username|default:"Not available" }}</p></div></div>
+                    <div class="activity-item"><div><p class="activity-title">Email</p><p class="text-muted" id="profileEmailValue">{{ profile_user.email|default:"Not available" }}</p></div></div>
+                    <div class="activity-item"><div><p class="activity-title">Location</p><p class="text-muted" id="profileLocationValue">{{ profile_details.location|default:"Not available" }}</p></div></div>
                 </div>
             </article>
 
             <article class="card">
                 <h2>Resume Insights</h2>
                 {% if latest_analysis_at %}
-                <p class="text-muted">Latest analysis: {{ latest_analysis_at|date:"M d, Y H:i" }}</p>
+                <p class="text-muted" id="latestAnalysisText">Latest analysis: {{ latest_analysis_at|date:"M d, Y H:i" }}</p>
                 {% else %}
-                <p class="text-muted">No analysis timestamp available.</p>
+                <p class="text-muted" id="latestAnalysisText">No analysis timestamp available.</p>
                 {% endif %}
                 <div class="tag-list">
-                    <span class="tag">{{ skills|length }} skills detected</span>
-                    <span class="tag">{{ career_matches|length }} career matches</span>
-                    <span class="tag">{{ skill_gaps|length }} skill gaps</span>
+                    <span class="tag" id="skillsCountTag">{{ skills|length }} skills detected</span>
+                    <span class="tag" id="matchesCountTag">{{ career_matches|length }} career matches</span>
+                    <span class="tag" id="gapsCountTag">{{ skill_gaps|length }} skill gaps</span>
                 </div>
             </article>
 
             <article class="card">
                 <h2>Career Matches</h2>
-                <div class="activity-list">
+                <div class="activity-list" id="careerMatchesList">
                     {% for career in career_matches %}
                     <div class="activity-item"><div><p class="activity-title">{{ career }}</p></div></div>
                     {% empty %}
@@ -77,7 +77,7 @@
 
             <article class="card">
                 <h2>Skill Gaps</h2>
-                <div class="activity-list">
+                <div class="activity-list" id="skillGapsList">
                     {% for gap in skill_gaps %}
                     <div class="activity-item"><div><p class="activity-title">{{ gap }}</p></div></div>
                     {% empty %}
@@ -89,11 +89,11 @@
             <article class="card">
                 <h2>Resume Strength</h2>
                 <div class="progress-track">
-                    <div class="progress-fill{% if resume_score < 50 %} low{% endif %}" style="width: {{ resume_score }}%"></div>
+                    <div id="resumeStrengthFill" class="progress-fill{% if resume_score < 50 %} low{% endif %}" style="width: {{ resume_score }}%"></div>
                 </div>
-                <p class="text-muted">{{ resume_score }}% Resume Strength</p>
+                <p class="text-muted" id="resumeStrengthText">{{ resume_score }}% Resume Strength</p>
                 <h3 class="dashboard-subhead">Detected Skills</h3>
-                <div class="tag-list">
+                <div class="tag-list" id="detectedSkillsTags">
                     {% for skill in skills %}
                     <span class="tag">{{ skill }}</span>
                     {% empty %}
@@ -104,13 +104,13 @@
 
             <article class="card">
                 <h2>AI Career Summary</h2>
-                <p class="text-muted">{{ ai_summary }}</p>
+                <p class="text-muted" id="aiSummaryText">{{ ai_summary }}</p>
             </article>
         </div>
 
         <article class="card profile-timeline-card">
             <h2>Activity Timeline</h2>
-            <div class="activity-list">
+            <div class="activity-list" id="activityTimelineList">
                 {% for activity in activities %}
                 <div class="activity-item"><div><p class="activity-title">{{ activity.action }}</p><p class="text-muted">{{ activity.created_at|date:"M d, Y H:i" }}</p></div></div>
                 {% empty %}
