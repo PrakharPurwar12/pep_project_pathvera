@@ -11,13 +11,15 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
-    {% include "nav.html" %}
+    <div class="site-shell">
+        {% include "nav.html" %}
 
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
 
-    {% include "footer.html" %}
+        {% include "footer.html" %}
+    </div>
 
     <script src="/static/js/core.js" defer></script>
     {% block extra_js %}{% endblock %}

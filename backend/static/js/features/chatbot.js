@@ -31,7 +31,12 @@ export function initChatbot() {
         showTyping(messages);
         showLoading(submitButton);
 
+        const startedAt = Date.now();
         const reply = await askAssistant(text);
+        const elapsed = Date.now() - startedAt;
+        if (elapsed < 520) {
+            await wait(520 - elapsed);
+        }
         removeTyping();
         appendMessage(messages, reply, "bot", true, storageKey);
         hideLoading(submitButton);
@@ -50,7 +55,7 @@ export function initChatbot() {
 
 function appendMessage(messages, text, role, save, storageKey) {
     const item = document.createElement("div");
-    item.className = `message ${role}`;
+    item.className = `message ${role} message-enter`;
     const content = document.createElement("span");
     content.className = "message-text";
 
@@ -70,6 +75,9 @@ function appendMessage(messages, text, role, save, storageKey) {
     meta.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     item.append(content, meta);
     messages.appendChild(item);
+    requestAnimationFrame(() => {
+        item.classList.remove("message-enter");
+    });
     messages.scrollTop = messages.scrollHeight;
     if (save) persistHistory(messages, storageKey);
 }
@@ -191,4 +199,10 @@ function persistHistory(messages, storageKey) {
         time: node.querySelector(".message-meta")?.textContent || ""
     }));
     localStorage.setItem(storageKey, JSON.stringify(list));
+}
+
+function wait(ms) {
+    return new Promise((resolve) => {
+        window.setTimeout(resolve, ms);
+    });
 }

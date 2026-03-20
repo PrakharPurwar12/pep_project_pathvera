@@ -3,11 +3,13 @@ import { clearAuthSession, getAuthProfile } from "../core/storage.js";
 import { registerLegacyUiBridge, showToast } from "../core/ui.js";
 
 const THEME_STORAGE_KEY = "pv-theme";
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
 export function initCoreApp() {
     registerLegacyUiBridge();
     if (enforceAuthAccess()) return;
 
+    initPageLoadState();
     bindThemeToggle();
     bindFaq();
     applyUserProfile();
@@ -15,6 +17,9 @@ export function initCoreApp() {
     const authState = setupAuthNav();
     setupLandingCtas(authState);
     bindWaitlistForm();
+    initScrollReveal();
+    bindPageTransitions();
+    initHeroDynamics();
 }
 
 function bindThemeToggle() {
@@ -35,9 +40,13 @@ function getActiveTheme() {
 
 function applyTheme(themeName) {
     const normalizedTheme = themeName === "dark" ? "dark" : "light";
+    document.body.classList.add("theme-switching");
     document.body.classList.toggle("dark-mode", normalizedTheme === "dark");
     document.documentElement.setAttribute("data-theme", normalizedTheme);
     localStorage.setItem(THEME_STORAGE_KEY, normalizedTheme);
+    window.setTimeout(() => {
+        document.body.classList.remove("theme-switching");
+    }, 320);
 }
 
 function setTheme(themeName) {
@@ -234,4 +243,97 @@ function setupLandingCtas(authState) {
     dashboardButtons.forEach((button) => {
         button.setAttribute("href", "/login/");
     });
+}
+
+function initPageLoadState() {
+    requestAnimationFrame(() => {
+        document.body.classList.add("is-ready");
+    });
+}
+
+function bindPageTransitions() {
+    if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return;
+
+    document.querySelectorAll('a[href^="/"]').forEach((link) => {
+        link.addEventListener("click", (event) => {
+            const href = link.getAttribute("href");
+            if (!href || href.startsWith("/#")) return;
+            if (link.target && link.target !== "_self") return;
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+            const currentPath = window.location.pathname.replace(/\/$/, "");
+            const targetPath = href.replace(/\/$/, "");
+            if (currentPath === targetPath) return;
+
+            event.preventDefault();
+            document.body.classList.add("is-leaving");
+            window.setTimeout(() => {
+                window.location.href = href;
+            }, 160);
+        });
+    });
+}
+
+function initScrollReveal() {
+    if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return;
+    if (!("IntersectionObserver" in window)) return;
+
+    const candidates = document.querySelectorAll(
+        ".card, .section-head, .page-intro, .trust-strip, .hero-main, .hero-panel, .auth-branding"
+    );
+    if (!candidates.length) return;
+
+    candidates.forEach((element, index) => {
+        element.classList.add("reveal-item");
+        element.style.setProperty("--reveal-delay", `${Math.min(index * 40, 260)}ms`);
+    });
+
+    const observer = new IntersectionObserver(
+        (entries, obs) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("is-visible");
+                obs.unobserve(entry.target);
+            });
+        },
+        { threshold: 0.16 }
+    );
+
+    candidates.forEach((element) => observer.observe(element));
+}
+
+function initHeroDynamics() {
+    const heroPanel = document.querySelector(".hero-panel");
+    if (!heroPanel) return;
+
+    if (!window.matchMedia(REDUCED_MOTION_QUERY).matches) {
+        heroPanel.addEventListener("mousemove", (event) => {
+            const bounds = heroPanel.getBoundingClientRect();
+            const x = ((event.clientX - bounds.left) / bounds.width - 0.5) * 8;
+            const y = ((event.clientY - bounds.top) / bounds.height - 0.5) * 8;
+            heroPanel.style.setProperty("--tilt-x", `${x.toFixed(2)}deg`);
+            heroPanel.style.setProperty("--tilt-y", `${(-y).toFixed(2)}deg`);
+        });
+        heroPanel.addEventListener("mouseleave", () => {
+            heroPanel.style.setProperty("--tilt-x", "0deg");
+            heroPanel.style.setProperty("--tilt-y", "0deg");
+        });
+    }
+
+    const panelNote = heroPanel.querySelector(".panel-note");
+    if (!panelNote) return;
+    const rotatingNotes = [
+        "Weekly readiness trend based on profile improvements.",
+        "Market signals recalculated from latest role demand.",
+        "Skill-gap priorities adjusted for your target role."
+    ];
+    let activeIndex = 0;
+    window.setInterval(() => {
+        activeIndex = (activeIndex + 1) % rotatingNotes.length;
+        panelNote.classList.add("is-swapping");
+        window.setTimeout(() => {
+            panelNote.textContent = rotatingNotes[activeIndex];
+            panelNote.classList.remove("is-swapping");
+        }, 160);
+    }, 3400);
 }

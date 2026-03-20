@@ -13,9 +13,16 @@ export function showToast(title, message, type = "success") {
     const wrap = ensureToastWrap();
     const toast = document.createElement("article");
     toast.className = `toast ${type === "error" ? "error" : "success"}`;
-    toast.innerHTML = `<p class="toast-title">${title}</p><p>${message}</p>`;
+    toast.innerHTML = `<p class="toast-title">${title}</p><p>${message}</p><span class="toast-progress"></span>`;
     wrap.appendChild(toast);
-    setTimeout(() => toast.remove(), 2800);
+    requestAnimationFrame(() => {
+        toast.classList.add("toast-in");
+    });
+    setTimeout(() => {
+        toast.classList.remove("toast-in");
+        toast.classList.add("toast-out");
+        setTimeout(() => toast.remove(), 240);
+    }, 2800);
 }
 
 export function showLoading(element) {

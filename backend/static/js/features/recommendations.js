@@ -58,6 +58,7 @@ function renderRecommendations(grid, recommendations) {
         const badgeClass = score < 80 ? "match-badge low" : "match-badge";
         const barClass = score < 80 ? "progress-fill low" : "progress-fill";
         const companyLabel = buildCompanyLabel(item);
+        const dynamicBadges = buildDynamicBadges(item, score);
 
         const card = document.createElement("article");
         card.className = "card recommendation-card";
@@ -71,6 +72,7 @@ function renderRecommendations(grid, recommendations) {
             </div>
             <div class="progress-track"><div class="${barClass}" style="width:${score}%"></div></div>
             <p class="text-muted">Skills to add: ${escapeHtml(skillsLine)}</p>
+            <div class="tag-list">${dynamicBadges.map((badge) => `<span class="tag">${escapeHtml(badge)}</span>`).join("")}</div>
             <button class="btn btn-primary btn-block view-match-btn" type="button">View Match</button>
         `;
         grid.appendChild(card);
@@ -131,6 +133,24 @@ function buildInsight(score, skills) {
         return `Good fit. Close ${skillCount} priority skill gap(s), then apply with tailored resume keywords.`;
     }
     return "Moderate fit. Improve listed skills first, then re-check your resume match before applying.";
+}
+
+function buildDynamicBadges(item, score) {
+    const badges = [];
+    const jobCount = Number(item?.job_count || 0);
+    const missingSkills = Array.isArray(item?.missing_skills) ? item.missing_skills.length : 0;
+
+    if (score >= 90) badges.push("Hot Match");
+    else if (score >= 80) badges.push("Strong Fit");
+    else badges.push("Skill Build");
+
+    if (jobCount >= 100) badges.push("High Demand");
+    else if (jobCount > 0) badges.push("Active Market");
+
+    if (missingSkills <= 2) badges.push("Quick Apply");
+    else badges.push("Upskill First");
+
+    return badges.slice(0, 3);
 }
 
 function buildSearchUrl(role, companyLocation) {

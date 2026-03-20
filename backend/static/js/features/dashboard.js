@@ -24,9 +24,9 @@ export function initDashboard() {
     const jobCount = recommendations.length;
     const skillsCount = countTechnicalSkills(parsed.technical_skills);
 
-    setText("resumeScore", resumeScore);
-    setText("jobMatches", jobCount);
-    setText("skillsMastered", skillsCount);
+    animateNumber("resumeScore", resumeScore);
+    animateNumber("jobMatches", jobCount);
+    animateNumber("skillsMastered", skillsCount);
     setText("semanticScore", `${formatPercent(topRecommendation.semantic_score)}%`);
     setText("marketScore", `${formatPercent(topRecommendation.market_score)}%`);
     setText(
@@ -38,7 +38,8 @@ export function initDashboard() {
         "resumeScoreNote",
         resumeScore >= 75 ? "Strong baseline for target roles" : "Room to improve targeted role readiness"
     );
-    setText("dashboardFreshness", "Updated from latest resume analysis");
+    setText("dashboardFreshness", "Updated just now");
+    startFreshnessTicker();
 
     createSkillChart(resumeScore);
     renderJobs(recommendations);
@@ -47,9 +48,9 @@ export function initDashboard() {
 }
 
 function applyEmptyDashboardState() {
-    setText("resumeScore", 0);
-    setText("jobMatches", 0);
-    setText("skillsMastered", 0);
+    animateNumber("resumeScore", 0);
+    animateNumber("jobMatches", 0);
+    animateNumber("skillsMastered", 0);
     setText("semanticScore", "0%");
     setText("marketScore", "0%");
     setText("scoreWeights", "--");
@@ -58,6 +59,24 @@ function applyEmptyDashboardState() {
     setText("dashboardFreshness", "No recent analysis");
     renderJobs([]);
     renderSkillGaps([]);
+}
+
+function startFreshnessTicker() {
+    const freshnessNode = document.getElementById("dashboardFreshness");
+    if (!freshnessNode) return;
+    const startedAt = Date.now();
+
+    const render = () => {
+        const elapsedMinutes = Math.floor((Date.now() - startedAt) / 60000);
+        if (elapsedMinutes <= 0) {
+            freshnessNode.textContent = "Updated just now";
+            return;
+        }
+        freshnessNode.textContent = `Updated ${elapsedMinutes} min ago`;
+    };
+
+    render();
+    window.setInterval(render, 60000);
 }
 
 function setDashboardState(hasAnalysis) {
@@ -211,6 +230,30 @@ function setText(id, value) {
     const node = document.getElementById(id);
     if (!node) return;
     node.textContent = String(value);
+}
+
+function animateNumber(id, targetValue) {
+    const node = document.getElementById(id);
+    if (!node) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+        node.textContent = String(targetValue);
+        return;
+    }
+
+    const endValue = Number.isFinite(Number(targetValue)) ? Number(targetValue) : 0;
+    const duration = 900;
+    const startedAt = performance.now();
+
+    const tick = (now) => {
+        const progress = Math.min((now - startedAt) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        node.textContent = String(Math.round(endValue * eased));
+        if (progress < 1) requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
 }
 
 function formatPercent(value) {
