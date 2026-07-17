@@ -18,8 +18,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from ml.pipeline.resume_parser import parse_resume
-from ml.pipeline.recommendation_engine import recommend_careers
 try:
     from google import genai
 except ImportError:
@@ -45,6 +43,15 @@ from .serializers import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def analyze_resume_file(file_path):
+    """Load ML dependencies only for resume-analysis requests."""
+    from ml.pipeline.resume_parser import parse_resume
+    from ml.pipeline.recommendation_engine import recommend_careers
+
+    parsed_resume = parse_resume(file_path)
+    return parsed_resume, recommend_careers(parsed_resume)
 
 
 class ProtectedView(APIView):
@@ -523,8 +530,7 @@ class ResumeViewSet(viewsets.ModelViewSet):
 
         try:
             # Parse resume
-            parsed_resume = parse_resume(temp_path)
-            recommendations = recommend_careers(parsed_resume)
+            parsed_resume, recommendations = analyze_resume_file(temp_path)
 
             # Create resume record
             resume = Resume.objects.create(
@@ -856,8 +862,7 @@ def analyze_resume(request):
             for chunk in resume_file.chunks():
                 destination.write(chunk)
 
-        parsed_resume = parse_resume(file_path)
-        recommendations = recommend_careers(parsed_resume)
+        parsed_resume, recommendations = analyze_resume_file(file_path)
         saved_resume_id = None
         save_error = None
         try:
