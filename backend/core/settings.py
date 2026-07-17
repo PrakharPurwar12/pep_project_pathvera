@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 import dj_database_url
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -93,12 +94,24 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 if not DEBUG:
     # Production Database (Render Postgres)
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        raise ImproperlyConfigured(
+            'DATABASE_URL must be set to the Render Postgres connection URL when DEBUG=False.'
         )
-    }
+
+    try:
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=database_url,
+                conn_max_age=600,
+            )
+        }
+    except dj_database_url.ParseError as exc:
+        raise ImproperlyConfigured(
+            'DATABASE_URL is invalid. Use the exact Internal Database URL from Render, '
+            'without surrounding quotes or a DATABASE_URL= prefix.'
+        ) from exc
 else:
     # Local Development Database
     DATABASES = {
