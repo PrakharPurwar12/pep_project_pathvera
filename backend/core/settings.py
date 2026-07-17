@@ -94,7 +94,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 if not DEBUG:
     # Production Database (Render Postgres)
-    database_url = os.environ.get('DATABASE_URL')
+    database_url = os.environ.get('DATABASE_URL', '').strip()
     if not database_url:
         raise ImproperlyConfigured(
             'DATABASE_URL must be set to the Render Postgres connection URL when DEBUG=False.'
@@ -109,8 +109,8 @@ if not DEBUG:
         }
     except dj_database_url.ParseError as exc:
         raise ImproperlyConfigured(
-            'DATABASE_URL is invalid. Use the exact Internal Database URL from Render, '
-            'without surrounding quotes or a DATABASE_URL= prefix.'
+            'DATABASE_URL is invalid. Use a complete PostgreSQL URL, without surrounding '
+            'quotes or a DATABASE_URL= prefix.'
         ) from exc
 else:
     # Local Development Database
